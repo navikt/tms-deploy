@@ -13,6 +13,8 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
+      - name: Set repository name
+        run: echo "REPOSITORY_NAME=$(echo $GITHUB_REPOSITORY | rev | cut -f1 -d"/" | rev )" >> $GITHUB_ENV
       - uses: "actions/checkout@v3"
       - uses: "actions/setup-node@v3"
         with:
@@ -25,6 +27,12 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
       - name: "Build application"
         run: "npm run build"
+      - name: cdn-upload
+        uses: navikt/frontend/actions/cdn-upload/v1@main
+        with:
+          cdn-team-name: min-side
+          source: ./dist
+          destination: $REPOSITORY_NAME
       - name: "Build and publish Docker image"
         run:
           "docker build --pull --tag ${IMAGE} . && echo $GITHUB_TOKEN | docker login\
