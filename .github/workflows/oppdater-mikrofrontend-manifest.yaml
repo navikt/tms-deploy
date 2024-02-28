@@ -1,4 +1,4 @@
-name: "Oppdtaer urk til mikrofrontendmanifest"
+name: "Oppdtaer url til mikrofrontendmanifest"
 on:
   workflow_call:
     inputs:
@@ -10,6 +10,9 @@ on:
         type: string
       url:
         required: true
+        type: string
+      commitmsg:
+        required: false
         type: string
 jobs:
   trigger_manifest_update:
@@ -30,5 +33,6 @@ jobs:
                      "id": "${{ inputs.id }}",
                      "url":"${{ inputs.url}}", 
                      "cluster":"${{ inputs.cluster }}",
-                     "initiator": "${{ github.actor }}"
+                     "initiator": "${{ github.actor }}",
+                     "commitmsg" ${{ inputs.commitmsg }}
                   }}'
