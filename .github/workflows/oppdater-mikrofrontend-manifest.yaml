@@ -1,4 +1,4 @@
-name: "Oppdtaer url til mikrofrontendmanifest"
+name: "Oppdater url til mikrofrontendmanifest"
 on:
   workflow_call:
     inputs:
