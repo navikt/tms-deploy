@@ -34,5 +34,5 @@ jobs:
                      "url":"${{ inputs.url}}", 
                      "cluster":"${{ inputs.cluster }}",
                      "initiator": "${{ github.actor }}",
-                     "commitmsg" ${{ inputs.commitmsg }}
+                     "commitmsg": "${{ inputs.commitmsg }}"
                   }}'
