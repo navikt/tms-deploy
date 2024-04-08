@@ -1,0 +1,30 @@
+name: "Oppdater url til mikrofrontendmanifest"
+on:
+  workflow_call:
+    inputs:
+      cluster:
+        required: true
+        type: string
+      id:
+        required: true
+        type: string
+      url:
+        required: true
+        type: string
+      commitmsg:
+        required: false
+        type: string
+jobs:
+  trigger_manifest_update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: navikt/github-app-token-generator@v1
+        id: get-token
+        with:
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          app-id: ${{ secrets.APP_ID }}
+      - run:  python3 python/update-manifest.py ${{ inputs.id }} ${{ inputs.url}} ${{inputs.cluster}} ${{ github.actor }} ${{ inputs.commitmsg }} ${{ steps.get-token.outputs.token }}
