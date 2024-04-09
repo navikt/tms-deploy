@@ -34,8 +34,7 @@ headers = {
 }
 
 print("Header debugg")
-print(headers["Authorization"][0:5])
-print(headers["Authorization"][15:20])
+print(headers["Authorization"][0:8] + "*****" + headers["Authorization"][13:30])
 
 try:
     response = requests.post(action_url, json=payload, headers=headers)
