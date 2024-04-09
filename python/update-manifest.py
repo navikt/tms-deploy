@@ -22,11 +22,7 @@ parser.add_argument("-initiator", required=True)
 parser.add_argument("-message", required=True)
 parser.add_argument("-token", required=True)
 
-all_args = parser.parse_known_args()
-print(all_args)
 args = parser.parse_args()
-
-parser.parse_known_args()
 
 if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
     parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")

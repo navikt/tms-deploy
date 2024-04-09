@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       commitmsg:
-        required: false
+        required: true
         type: string
 jobs:
   trigger_manifest_update:
@@ -26,10 +26,17 @@ jobs:
         with:
           private-key: ${{ secrets.PRIVATE_KEY }}
           app-id: ${{ secrets.APP_ID }}
+      - run: |
+          echo 'id ${{ inputs.id }}'
+          echo '-url ${{ inputs.url}}'
+          echo '-cluster ${{ inputs.cluster }}'
+          echo '-initiator ${{ github.actor }}'
+          echo '-message ${{ inputs.commitmsg }}'
       - run : |
           mkdir python
           cd python 
           curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/requirements.txt >> requirements.txt
           curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update-manifest.py >> update-manifest.py
           pip3 install -r requirements.txt
-      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message ${{ inputs.message }}  -token ${{ steps.get-token.outputs.token }}
+        name: Hent oppdateringscript
+      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message ${{ inputs.commitmsg }}  -token ${{ steps.get-token.outputs.token }}
