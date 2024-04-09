@@ -18,12 +18,6 @@ jobs:
   trigger_manifest_update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: 'navikt/tms-deploy'
-          path: 'tms-deploy'
-          ref: 'main'
-
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -32,4 +26,8 @@ jobs:
         with:
           private-key: ${{ secrets.PRIVATE_KEY }}
           app-id: ${{ secrets.APP_ID }}
+      - run : | 
+          mkdir python 
+          && curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/requirements.txt >> requirements.txt 
+          && curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update-manifest.py >> update-manifest
       - run:  python3 python/update-manifest.py ${{ inputs.id }} ${{ inputs.url}} ${{inputs.cluster}} ${{ github.actor }} ${{ inputs.commitmsg }} ${{ steps.get-token.outputs.token }}
