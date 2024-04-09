@@ -44,6 +44,7 @@ headers = {
 try:
     response = requests.post(action_url, json=payload, headers=headers, auth=BearerAuth(args.token))
     response.raise_for_status()
+    print(response.content)
 except requests.exceptions.HTTPError as error:
     print(error)
     print(response.headers)
@@ -52,4 +53,7 @@ except requests.exceptions.HTTPError as error:
 print("Oppdatering av manifest startet")
 print(response.content)
 print(response.text)
+print(response.headers)
+print(response.json())
+
 
