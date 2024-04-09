@@ -50,4 +50,4 @@ except requests.exceptions.HTTPError as error:
     sys.exit(1)
 
 print("Oppdatering av manifest startet")
-print(response)
+print(response.content, response.text)
