@@ -31,8 +31,9 @@ payload = {
 headers = {
     "Accept": "application/vnd.github+json",
     "Authorization": f'Bearer {args.token}'
-
 }
+
+print(headers["Authorization"][0:15])
 
 try:
     response = requests.post(action_url, json=payload, headers=headers)
