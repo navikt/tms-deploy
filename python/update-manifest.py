@@ -46,8 +46,8 @@ try:
     response.raise_for_status()
 except requests.exceptions.HTTPError as error:
     print(error)
-    print(response.request.headers["Authorization"][0:6])
     print(response.headers)
     sys.exit(1)
 
 print("Oppdatering av manifest startet")
+print(response)
