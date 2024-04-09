@@ -52,6 +52,7 @@ headers = {
 }
 
 try:
+    print("Sender request til selector")
     response = requests.post(action_url, json=payload, headers=headers, auth=BearerAuth(args.token))
     response.raise_for_status()
 except requests.exceptions.HTTPError as error:
@@ -66,13 +67,13 @@ run_name = "Oppdater {0} i {1} : {2}  {3}".format(
 )
 
 try:
-    print("...Venter på kjøring")
+    print("...Venter på status")
     time.sleep(15)
-    print("...Venter på kjøring")
+    print("...Venter på status")
     time.sleep(15)
-    print("...Venter på kjøring")
+    print("...Venter på status")
     time.sleep(15)
-    print("...Venter på kjøring")
+    print("...Venter på status")
     time.sleep(15)
 
     response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs",
