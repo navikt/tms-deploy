@@ -57,7 +57,7 @@ except requests.exceptions.HTTPError as error:
 print("Oppdatering av manifest startet")
 
 run_name = "Oppdater {0} i {1} : {2}  {3}".format(
-    args.id, args.cluster, args.commitmsg, dispatch_id
+    args.id, args.cluster, args.message, dispatch_id
 )
 
 try:
