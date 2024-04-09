@@ -13,6 +13,7 @@ class BearerAuth(requests.auth.AuthBase):
         r.headers["authorization"] = 'Bearer {}'.format(self.token)
         return r
 
+
 ACTION_URL = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches"
 DISPATCH_ID = random.randint(1000, 9999)
 
@@ -20,6 +21,7 @@ HEADERS = {
     "Accept": "application/vnd.github+json",
     "User-Agent": "request"
 }
+
 
 def create_payload(args):
    return {
@@ -33,6 +35,7 @@ def create_payload(args):
         "dispatch_id": DISPATCH_ID
     }
 }
+
 
 def process_args():
     parser = argparse.ArgumentParser()
@@ -71,6 +74,7 @@ def get_name(args, payload):
     )
 
     return run_name
+
 
 def get_workflow_id(token, run_name):
     time.sleep(60)
