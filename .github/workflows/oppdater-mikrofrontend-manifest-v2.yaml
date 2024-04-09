@@ -21,17 +21,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+        name: sett opp python
       - uses: navikt/github-app-token-generator@v1
         id: get-token
         with:
           private-key: ${{ secrets.PRIVATE_KEY }}
           app-id: ${{ secrets.APP_ID }}
-      - run: |
-          echo 'id ${{ inputs.id }}'
-          echo '-url ${{ inputs.url}}'
-          echo '-cluster ${{ inputs.cluster }}'
-          echo '-initiator ${{ github.actor }}'
-          echo '-message ${{ inputs.commitmsg }}'
       - run : |
           mkdir python
           cd python 
@@ -40,3 +35,4 @@ jobs:
           pip3 install -r requirements.txt
         name: Hent oppdateringscript
       - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message ${{ inputs.commitmsg }}  -token ${{ steps.get-token.outputs.token }}
+        name: Oppdater manifest
