@@ -27,7 +27,8 @@ jobs:
           private-key: ${{ secrets.PRIVATE_KEY }}
           app-id: ${{ secrets.APP_ID }}
       - run : | 
-          mkdir python 
-          && curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/requirements.txt >> requirements.txt 
-          && curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update-manifest.py >> update-manifest
+          mkdir python
+          cd python
+          curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/requirements.txt >> requirements.txt
+          curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update-manifest.py >> update-manifest.py
       - run:  python3 python/update-manifest.py ${{ inputs.id }} ${{ inputs.url}} ${{inputs.cluster}} ${{ github.actor }} ${{ inputs.commitmsg }} ${{ steps.get-token.outputs.token }}

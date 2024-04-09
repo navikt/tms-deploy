@@ -33,7 +33,6 @@ headers = {
     "Authorization": f'Bearer {args.token}'
 
 }
-print(headers)
 
 try:
     response = requests.post(action_url, json=payload, headers=headers)
