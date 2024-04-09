@@ -14,27 +14,17 @@ class BearerAuth(requests.auth.AuthBase):
         return r
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-id", required=True)
-parser.add_argument("-url", required=True)
-parser.add_argument("-cluster", required=True)
-parser.add_argument("-initiator", required=True)
-parser.add_argument("-message", required=True)
-parser.add_argument("-token", required=True)
+ACTION_URL = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches"
+DISPATCH_ID = random.randint(1000, 9999)
 
-args = parser.parse_args()
-
-if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
-    parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
-
-if "https://cdn.nav.no" not in args.url:
-    parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
+HEADERS = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "request"
+}
 
 
-action_url = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches"
-dispatch_id = random.randint(1000, 9999)
-
-payload = {
+def create_payload(args):
+   return {
     "event_type": "update_microfrontend_manifest",
     "client_payload": {
         "id": args.id,
@@ -42,64 +32,97 @@ payload = {
         "cluster": args.cluster,
         "initiator": args.initiator,
         "commitmsg": args.message,
-        "dispatch_id": dispatch_id
+        "dispatch_id": DISPATCH_ID
     }
 }
 
-headers = {
-    "Accept": "application/vnd.github+json",
-    "User-Agent": "request"
-}
 
-try:
-    print("Sender request til selector")
-    response = requests.post(action_url, json=payload, headers=headers, auth=BearerAuth(args.token))
+def process_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-id", required=True)
+    parser.add_argument("-url", required=True)
+    parser.add_argument("-cluster", required=True)
+    parser.add_argument("-initiator", required=True)
+    parser.add_argument("-message", required=True)
+    parser.add_argument("-token", required=True)
+
+    args = parser.parse_args()
+
+    if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
+        parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
+
+    if "https://cdn.nav.no" not in args.url:
+        parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
+
+    return args
+
+
+def get_name(args, payload):
+    try:
+        print("Sender request til selector")
+        response = requests.post(ACTION_URL, json=payload, headers=HEADERS, auth=BearerAuth(args.token))
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as error:
+        print(error)
+        print(response.headers)
+        sys.exit(1)
+
+    print("Oppdatering av manifest startet")
+
+    run_name = "Oppdater {0} i {1} : {2}  {3}".format(
+        args.id, args.cluster, args.message, DISPATCH_ID
+    )
+
+    return run_name
+
+
+def get_workflow_id(token, run_name):
+    time.sleep(60)
+
+    response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs", headers=HEADERS, auth=BearerAuth(token))
     response.raise_for_status()
-except requests.exceptions.HTTPError as error:
-    print(error)
-    print(response.headers)
-    sys.exit(1)
 
-print("Oppdatering av manifest startet")
-
-run_name = "Oppdater {0} i {1} : {2}  {3}".format(
-    args.id, args.cluster, args.message, dispatch_id
-)
-
-try:
-    print("...Venter på status")
-    time.sleep(15)
-    print("...Venter på status")
-    time.sleep(15)
-    print("...Venter på status")
-    time.sleep(15)
-    print("...Venter på status")
-    time.sleep(15)
-
-    response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs",
-                            headers=headers, auth=BearerAuth(args.token))
-    response.raise_for_status()
-    run_name = "Oppdater tms-shell i dev-gcp : dev-gcp"
     workflows = response.json()["workflow_runs"]
     workflow_id = filter(lambda x: x["name"] == run_name, workflows).__next__()["id"]
 
-    response = requests.get(
-        "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs/{}".format(workflow_id),
-        headers=headers, auth=BearerAuth(args.token))
-    response.raise_for_status()
-    status = response.json()["conclusion"]
-    if status == "success":
-        print("Manifesteturl er oppdatert! ")
-        sys.exit(0)
-    elif status == "failure":
-        print("Manifestoppdatering feiler i tms-mikrofrontend-selector, kontakt team min side")
-        sys.exit(1)
-    else:
-        print("Oppdatering er kjørt med ukjent resultat")
+    return workflow_id
 
-except requests.exceptions.HTTPError as error:
-    print("Fant ikke status for workflow i tms-mikrofrontend-selector.{}".format(error))
-    sys.exit(0)
-except Exception as error:
-    print("Feil i henting av status: {}".format(error))
-    sys.exit(0)
+
+def get_status(token, workflow_id):
+    response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs/{}".format(workflow_id), headers=HEADERS, auth=BearerAuth(token))
+    response.raise_for_status()
+
+    return response.json()["conclusion"]
+
+
+def check_status(token, run_name):
+    try:
+        workflow_id = get_workflow_id(token, run_name)
+        status = get_status(token, workflow_id)
+
+        if status == "success":
+            print("Manifesteturl er oppdatert! ")
+            sys.exit(0)
+        elif status == "failure":
+            print("Manifestoppdatering feiler i tms-mikrofrontend-selector, kontakt team min side")
+            sys.exit(1)
+        else:
+            print("Oppdatering er kjørt med ukjent resultat")
+
+    except requests.exceptions.HTTPError as error:
+        print("Fant ikke status for workflow i tms-mikrofrontend-selector.{}".format(error))
+        sys.exit(0)
+    except Exception as error:
+        print("Feil i henting av status: {}".format(error))
+        sys.exit(0)
+
+
+def main():
+    args = process_args()
+    payload = create_payload(args)
+    name = get_name(args, payload)
+    check_status(args.token, name)
+
+
+if __name__ == "__main__":
+    main()
