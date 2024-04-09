@@ -1,7 +1,6 @@
 import sys
 import argparse
 import time
-
 import requests.auth
 import random
 
@@ -16,15 +15,23 @@ class BearerAuth(requests.auth.AuthBase):
 
 
 parser = argparse.ArgumentParser()
-
-parser.add_argument("id")
-parser.add_argument("url")
-parser.add_argument("cluster")
-parser.add_argument("initiator")
-parser.add_argument("message")
-parser.add_argument("token")
+parser.add_argument("-id", required=True)
+parser.add_argument("-url", required=True)
+parser.add_argument("-cluster", required=True)
+parser.add_argument("-initiator", required=True)
+parser.add_argument("-message", required=True)
+parser.add_argument("-token", required=True)
 
 args = parser.parse_args()
+
+parser.parse_known_args()
+
+if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
+    parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
+
+if "https://cdn.nav.no" not in args.url:
+    parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
+
 
 action_url = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches"
 dispatch_id = random.randint(1000, 9999)
@@ -61,7 +68,15 @@ run_name = "Oppdater {0} i {1} : {2}  {3}".format(
 )
 
 try:
-    time.sleep(60)
+    print("...Venter på kjøring")
+    time.sleep(15)
+    print("...Venter på kjøring")
+    time.sleep(15)
+    print("...Venter på kjøring")
+    time.sleep(15)
+    print("...Venter på kjøring")
+    time.sleep(15)
+
     response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs",
                             headers=headers, auth=BearerAuth(args.token))
     response.raise_for_status()
