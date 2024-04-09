@@ -1,9 +1,16 @@
 import sys
-
-import requests
 import argparse
+import requests.auth
 
-# Ta imot commandlineargs
+
+class BearerAuth(requests.auth.AuthBase):
+    def __init__(self, token):
+        self.token = token
+
+    def __call__(self, r):
+        r.headers["authorization"] = 'Bearer {}'.format(self.token)
+        return r
+
 
 parser = argparse.ArgumentParser()
 
@@ -30,19 +37,16 @@ payload = {
     }}
 headers = {
     "Accept": "application/vnd.github+json",
-    "Authorization": f'Bearer {args.token}'
+    "User-Agent": "request"
 }
 
-print("Header debugg")
-print(headers["Authorization"][0:8] + "*****" + headers["Authorization"][13:30])
 
 try:
-    response = requests.post(action_url, json=payload, headers=headers)
+    response = requests.post(action_url, json=payload, headers=headers, auth=BearerAuth(args.token))
     response.raise_for_status()
 except requests.exceptions.HTTPError as error:
     print(error)
+    print(response.headers)
     sys.exit(1)
 
 print("Oppdatering av manifest startet")
-print(response.text)
-print(response.content)
