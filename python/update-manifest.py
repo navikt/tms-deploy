@@ -33,7 +33,9 @@ headers = {
     "Authorization": f'Bearer {args.token}'
 }
 
-print(headers["Authorization"][0:15])
+print("Header debugg")
+print(headers["Authorization"][0:5])
+print(headers["Authorization"][15:20])
 
 try:
     response = requests.post(action_url, json=payload, headers=headers)
