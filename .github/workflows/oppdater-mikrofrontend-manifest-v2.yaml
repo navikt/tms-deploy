@@ -26,6 +26,19 @@ jobs:
         with:
           private-key: ${{ secrets.PRIVATE_KEY }}
           app-id: ${{ secrets.APP_ID }}
+      - run: |
+          curl --request POST \
+          --url 'https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches' \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ steps.get-token.outputs.token }}" \
+          --data '{"event_type": "update_microfrontend_manifest",
+               "client_payload": {
+                     "id": "${{ inputs.id }}",
+                     "url":"${{ inputs.url}}", 
+                     "cluster":"${{ inputs.cluster }}",
+                     "initiator": "${{ github.actor }}",
+                     "commitmsg": "${{ inputs.commitmsg }}"
+                  }}'
       - run : |
           mkdir python
           cd python 
