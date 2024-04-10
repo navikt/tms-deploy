@@ -20,6 +20,7 @@ jobs:
     env:
       message: ${{ inputs.commitmsg }}
     steps:
+      - uses: "actions/checkout@v4"
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -41,7 +42,7 @@ jobs:
         run:  |
          echo "message=$(git log -1 --pretty="format:%s")"
          echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
-         echo $GITHUB_ENV
+         echo {{ env.message }}
       - run: |
           echo "${{ env }}"
           echo "${{ env.message }}"

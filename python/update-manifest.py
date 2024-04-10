@@ -91,7 +91,7 @@ def get_workflow_id(token, run_name):
 
 
 def get_status(token, workflow_id):
-    workflow_url = "{0}{1}".format(RUN_URL, workflow_id)
+    workflow_url = "{0}/{1}".format(RUN_URL, workflow_id)
     response = requests.get(workflow_url, headers=HEADERS, auth=BearerAuth(token))
     response.raise_for_status()
 
