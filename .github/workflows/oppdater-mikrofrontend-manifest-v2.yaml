@@ -39,5 +39,5 @@ jobs:
       - name: Sjekk commitmessage
         if: $message==''
         run:  echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
-      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message ${{ message }}  -token ${{ steps.get-token.outputs.token }}
+      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message $message  -token ${{ steps.get-token.outputs.token }}
         name: Oppdater manifest
