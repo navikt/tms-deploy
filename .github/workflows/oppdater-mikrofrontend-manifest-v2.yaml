@@ -42,5 +42,8 @@ jobs:
          echo "message=$(git log -1 --pretty="format:%s")"
          echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
          echo $GITHUB_ENV
-      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }}
+      - run: |
+          echo "${{ env }}"
+          echo "${{ env.message }}"
+          python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }}
         name: Oppdater manifest
