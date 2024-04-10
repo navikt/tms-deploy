@@ -14,7 +14,9 @@ class BearerAuth(requests.auth.AuthBase):
         return r
 
 
-ACTION_URL = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches"
+DISPATCH_URL = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/dispatches"
+RUN_URL = "https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs"
+
 DISPATCH_ID = random.randint(1000, 9999)
 
 HEADERS = {
@@ -60,7 +62,7 @@ def process_args():
 def get_name(args, payload):
     try:
         print("Sender request til selector")
-        response = requests.post(ACTION_URL, json=payload, headers=HEADERS, auth=BearerAuth(args.token))
+        response = requests.post(DISPATCH_URL, json=payload, headers=HEADERS, auth=BearerAuth(args.token))
         response.raise_for_status()
     except requests.exceptions.HTTPError as error:
         print(error)
@@ -79,7 +81,7 @@ def get_name(args, payload):
 def get_workflow_id(token, run_name):
     time.sleep(60)
 
-    response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs", headers=HEADERS, auth=BearerAuth(token))
+    response = requests.get(RUN_URL, headers=HEADERS, auth=BearerAuth(token))
     response.raise_for_status()
 
     workflows = response.json()["workflow_runs"]
@@ -89,7 +91,8 @@ def get_workflow_id(token, run_name):
 
 
 def get_status(token, workflow_id):
-    response = requests.get("https://api.github.com/repos/navikt/tms-mikrofrontend-selector/actions/runs/{}".format(workflow_id), headers=HEADERS, auth=BearerAuth(token))
+    workflow_url = "{0}{1}".format(RUN_URL, workflow_id)
+    response = requests.get(workflow_url, headers=HEADERS, auth=BearerAuth(token))
     response.raise_for_status()
 
     return response.json()["conclusion"]
