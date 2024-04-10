@@ -17,6 +17,8 @@ on:
 jobs:
   trigger_manifest_update:
     runs-on: ubuntu-latest
+    env:
+      message: ${{ inputs.commitmsg }}
     steps:
       - uses: actions/setup-python@v4
         with:
@@ -34,5 +36,8 @@ jobs:
           curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update-manifest.py >> update-manifest.py
           pip3 install -r requirements.txt
         name: Hent oppdateringscript
-      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ inputs.commitmsg }}"  -token ${{ steps.get-token.outputs.token }}
+      - name: Sjekk commitmessage
+        if: $message==''
+        run:  echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
+      - run:  python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message ${{ $message }}  -token ${{ steps.get-token.outputs.token }}
         name: Oppdater manifest
