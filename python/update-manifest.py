@@ -85,9 +85,12 @@ def get_workflow_id(token, run_name):
     response.raise_for_status()
 
     workflows = response.json()["workflow_runs"]
-    workflow_id = filter(lambda x: x["name"] == run_name, workflows).__next__()["id"]
 
-    return workflow_id
+    workflow_id = [wf["id"]
+                   for wf in workflows
+                   if (wf['name'] == run_name)]
+
+    return workflow_id[0]
 
 
 def get_status(token, workflow_id):
