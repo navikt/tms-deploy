@@ -45,5 +45,6 @@ jobs:
       - run: |
           echo "${{ env }}"
           echo "${{ env.message }}"
+          
           python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }}
         name: Oppdater manifest
