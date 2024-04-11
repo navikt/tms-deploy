@@ -5,26 +5,16 @@ from unittest.mock import patch
 
 
 class TestGetWorkflowId(unittest.TestCase):
-    def _mock_response(self, status=200, content="Content", json_data=None, raise_for_status=None):
-
+    def _mock_response(self, json=None):
         mock_response = mock.Mock()
-        mock_response.raise_for_status = mock.Mock()
-
-        if raise_for_status:
-            mock_response.raise_for_status.side_effect = raise_for_status
-
-        mock_response.status_code = status
-        mock_response.content = content
-
-        if json_data:
-            mock_response.json = mock.Mock(return_value=json_data)
+        mock_response.json.return_value = json
 
         return mock_response
 
     @patch('time.sleep', return_value=None)
     @mock.patch('requests.get')
     def test_with_existing_id(self, mock_get):
-        mock_resp = self._mock_response(json_data={
+        mock_resp = self._mock_response(json={
             "total_count": 1096,
             "workflow_runs": [
                 {
@@ -49,28 +39,19 @@ class TestGetWorkflowId(unittest.TestCase):
 
 
 class TestGetStatus(unittest.TestCase):
-    def _mock_response(self, status=200, content="Content", json_data=None, raise_for_status=None):
-
+    def _mock_response(self, json=None):
         mock_response = mock.Mock()
-        mock_response.raise_for_status = mock.Mock()
-
-        if raise_for_status:
-            mock_response.raise_for_status.side_effect = raise_for_status
-
-        mock_response.status_code = status
-        mock_response.content = content
-
-        if json_data:
-            mock_response.json = mock.Mock(return_value=json_data)
+        mock_response.json.return_value = json
 
         return mock_response
 
     @mock.patch('requests.get')
     def test_with_existing_conclusion(self, mock_get):
-        mock_resp = self._mock_response(json_data={"conclusion": "success"})
+        mock_resp = self._mock_response(json={
+            "conclusion": "success"
+        })
 
         mock_get.return_value = mock_resp
-
         result = update_manifest.get_status(token="token", workflow_id="123")
 
         self.assertEqual(result, "success")
