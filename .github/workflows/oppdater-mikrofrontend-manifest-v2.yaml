@@ -35,7 +35,7 @@ jobs:
           mkdir python
           cd python 
           curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/requirements.txt >> requirements.txt
-          curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update-manifest.py >> update-manifest.py
+          curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update_manifest.py >> update_manifest.py
           pip3 install -r requirements.txt
         name: Hent oppdateringscript
       - name: Sjekk commitmessage
@@ -43,5 +43,5 @@ jobs:
         run:  |
          echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
       - run: |          
-          python3 python/update-manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }}
+          python3 python/update_manifest.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }}
         name: Oppdater manifest

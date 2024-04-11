@@ -71,9 +71,7 @@ def get_name(args, payload):
 
     print("Oppdatering av manifest startet")
 
-    run_name = "Oppdater {0} i {1} : {2}  {3}".format(
-        args.id, args.cluster, args.message, DISPATCH_ID
-    )
+    run_name = "Oppdater {0} i {1} : {2}  {3}".format(args.id, args.cluster, args.message, DISPATCH_ID)
 
     return run_name
 
@@ -90,6 +88,15 @@ def get_workflow_id(token, run_name):
                    for wf in workflows
                    if (wf['name'] == run_name)]
 
+    print(workflow_id)
+    print(workflows)
+
+    """    
+    if workflow_id == []:
+        print("Fant ikke workflow id med angitt commit-melding")
+        sys.exit(1)
+    """
+
     return workflow_id[0]
 
 
@@ -97,6 +104,11 @@ def get_status(token, workflow_id):
     workflow_url = "{0}/{1}".format(RUN_URL, workflow_id)
     response = requests.get(workflow_url, headers=HEADERS, auth=BearerAuth(token))
     response.raise_for_status()
+    """ 
+    if "conclusion" not in response.json().keys():
+        print("Fant ikke status for commit med id {}".format(workflow_id))
+        sys.exit(1)
+    """
 
     return response.json()["conclusion"]
 
