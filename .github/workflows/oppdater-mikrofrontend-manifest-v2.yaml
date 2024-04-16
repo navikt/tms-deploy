@@ -37,6 +37,7 @@ jobs:
           curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/requirements.txt >> requirements.txt
           curl https://raw.githubusercontent.com/navikt/tms-deploy/main/python/update_manifest.py >> update_manifest.py
           pip3 install -r requirements.txt
+          python3 test_update_manifest.py
         name: Hent oppdateringscript
       - name: Sjekk commitmessage
         if: env.message==''

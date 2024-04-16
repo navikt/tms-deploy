@@ -26,17 +26,25 @@ HEADERS = {
 
 
 def create_payload(args):
-   return {
-    "event_type": "update_microfrontend_manifest",
-    "client_payload": {
-        "id": args.id,
-        "url": args.url,
-        "cluster": args.cluster,
-        "initiator": args.initiator,
-        "commitmsg": args.message,
-        "dispatch_id": DISPATCH_ID
+    return {
+        "event_type": "update_microfrontend_manifest",
+        "client_payload": {
+            "id": args.id,
+            "url": args.url,
+            "cluster": args.cluster,
+            "initiator": args.initiator,
+            "commitmsg": args.message,
+            "dispatch_id": DISPATCH_ID
+        }
     }
-}
+
+
+def validate(args, parser):
+    if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
+        parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
+
+    if "https://cdn.nav.no" not in args.url:
+        parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
 
 
 def process_args():
@@ -49,12 +57,7 @@ def process_args():
     parser.add_argument("-token", required=True)
 
     args = parser.parse_args()
-
-    if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
-        parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
-
-    if "https://cdn.nav.no" not in args.url:
-        parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
+    validate(args, parser)
 
     return args
 
@@ -91,12 +94,6 @@ def get_workflow_id(token, run_name):
     print(workflow_id)
     print(workflows)
 
-    """    
-    if workflow_id == []:
-        print("Fant ikke workflow id med angitt commit-melding")
-        sys.exit(1)
-    """
-
     return workflow_id[0]
 
 
@@ -104,11 +101,6 @@ def get_status(token, workflow_id):
     workflow_url = "{0}/{1}".format(RUN_URL, workflow_id)
     response = requests.get(workflow_url, headers=HEADERS, auth=BearerAuth(token))
     response.raise_for_status()
-    """ 
-    if "conclusion" not in response.json().keys():
-        print("Fant ikke status for commit med id {}".format(workflow_id))
-        sys.exit(1)
-    """
 
     return response.json()["conclusion"]
 

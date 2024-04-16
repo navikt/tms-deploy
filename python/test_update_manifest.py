@@ -2,6 +2,7 @@ import mock
 import unittest
 import update_manifest
 from unittest.mock import patch
+import argparse
 
 
 class TestGetWorkflowId(unittest.TestCase):
@@ -56,6 +57,34 @@ class TestGetStatus(unittest.TestCase):
 
         self.assertEqual(result, "success")
         self.assertTrue(mock_resp.raise_for_status.called)
+
+
+class TestValidate(unittest.TestCase):
+    def test_with_cluster_and_url(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-url", default="https://cdn.nav.no/...")
+        parser.add_argument("-cluster", default="dev-gcp")
+        args = parser.parse_args()
+
+        update_manifest.validate(args, parser)
+
+    def test_without_cluster(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-url", default="https://cdn.nav.no/...")
+        parser.add_argument("-cluster", default="")
+        args = parser.parse_args()
+
+        with self.assertRaises(SystemExit):
+            update_manifest.validate(args, parser)
+
+    def test_without_url(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-url", default="")
+        parser.add_argument("-cluster", default="dev-gcp")
+        args = parser.parse_args()
+
+        with self.assertRaises(SystemExit):
+            update_manifest.validate(args, parser)
 
 
 if __name__ == '__main__':
