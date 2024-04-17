@@ -91,9 +91,6 @@ def get_workflow_id(token, run_name):
                    for wf in workflows
                    if (wf['name'] == run_name)]
 
-    print(workflow_id)
-    print(workflows)
-
     return workflow_id[0]
 
 
