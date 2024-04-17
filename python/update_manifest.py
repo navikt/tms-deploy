@@ -26,17 +26,25 @@ HEADERS = {
 
 
 def create_payload(args):
-   return {
-    "event_type": "update_microfrontend_manifest",
-    "client_payload": {
-        "id": args.id,
-        "url": args.url,
-        "cluster": args.cluster,
-        "initiator": args.initiator,
-        "commitmsg": args.message,
-        "dispatch_id": DISPATCH_ID
+    return {
+        "event_type": "update_microfrontend_manifest",
+        "client_payload": {
+            "id": args.id,
+            "url": args.url,
+            "cluster": args.cluster,
+            "initiator": args.initiator,
+            "commitmsg": args.message,
+            "dispatch_id": DISPATCH_ID
+        }
     }
-}
+
+
+def validate(args, parser):
+    if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
+        parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
+
+    if "https://cdn.nav.no" not in args.url:
+        parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
 
 
 def process_args():
@@ -49,12 +57,7 @@ def process_args():
     parser.add_argument("-token", required=True)
 
     args = parser.parse_args()
-
-    if args.cluster != "dev-gcp" and args.cluster != "prod-gcp":
-        parser.error("Feil verdi for cluster, tillate verdier er dev-gcp eller prod-gcp")
-
-    if "https://cdn.nav.no" not in args.url:
-        parser.error("Feil verdi for manifesturl, må starte på https://cdn.nav.no")
+    validate(args, parser)
 
     return args
 
@@ -71,9 +74,7 @@ def get_name(args, payload):
 
     print("Oppdatering av manifest startet")
 
-    run_name = "Oppdater {0} i {1} : {2}  {3}".format(
-        args.id, args.cluster, args.message, DISPATCH_ID
-    )
+    run_name = "Oppdater {0} i {1} : {2}  {3}".format(args.id, args.cluster, args.message, DISPATCH_ID)
 
     return run_name
 
