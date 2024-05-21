@@ -40,7 +40,7 @@ jobs:
       - name: cdn-upload
         uses: nais/deploy/actions/cdn-upload/v2@master
         with:
-          cdn-team-name: min-side
+          team: min-side
           source: ./dist
           destination: ${{ env.REPOSITORY_NAME }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
