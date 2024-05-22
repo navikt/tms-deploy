@@ -45,13 +45,13 @@ jobs:
           destination: ${{ env.REPOSITORY_NAME }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-      - name: "Build and publish Docker image"
-        run:
-          "docker build --pull --tag ${IMAGE} . && echo $GITHUB_TOKEN | docker login\
-          \ --username $GITHUB_REPOSITORY --password-stdin https://ghcr.io\
-          \ && docker push ${IMAGE}"
-        env:
-          "GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Build and push"
+        uses: nais/docker-build-push@v0
+        id: docker-build-push
+        with:
+          team: min-side
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
   deploy:
     runs-on: ubuntu-latest
     needs: build
