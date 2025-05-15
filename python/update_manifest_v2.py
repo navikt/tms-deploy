@@ -31,8 +31,6 @@ def create_payload(args):
         "client_payload": {
             "id": args.id,
             "url": args.url,
-            "name": args.name,
-            "namespace": args.namespace,
             "cluster": args.cluster,
             "initiator": args.initiator,
             "commitmsg": args.message,
@@ -57,8 +55,6 @@ def process_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-id", required=True)
     parser.add_argument("-url", required=True)
-    parser.add_argument("-name", required=True)
-    parser.add_argument("-namespace", required=True)
     parser.add_argument("-cluster", required=True)
     parser.add_argument("-initiator", required=True)
     parser.add_argument("-message", required=True)

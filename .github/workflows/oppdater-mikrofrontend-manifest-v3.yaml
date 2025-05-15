@@ -2,19 +2,13 @@ name: "Oppdater url til mikrofrontendmanifest"
 on:
   workflow_call:
     inputs:
+      cluster:
+        required: true
+        type: string
       id:
         required: true
         type: string
       url:
-        required: true
-        type: string
-      name:
-        required: true
-        type: string
-      namespace:
-        required: true
-        type: string
-      cluster:
         required: true
         type: string
       commitmsg:
@@ -52,5 +46,5 @@ jobs:
         run:  |
           echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
       - run: |
-          python3 python/update_manifest_v2.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }} -ssr ${{ inputs.ssr }} -name ${{ inputs.name }} -namespace ${{ inputs.namespace }}
+          python3 python/update_manifest_v2.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }} -ssr ${{ inputs.ssr }}
         name: Oppdater manifest
