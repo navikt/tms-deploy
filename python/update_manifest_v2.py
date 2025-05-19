@@ -35,7 +35,7 @@ def create_payload(args):
             "initiator": args.initiator,
             "commitmsg": args.message,
             "dispatch_id": DISPATCH_ID,
-            "appname:" args.appname,
+            "appname": args.appname,
             "namespace": args.namespace,
             "ssr": args.ssr
         }
