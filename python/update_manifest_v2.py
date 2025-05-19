@@ -35,6 +35,8 @@ def create_payload(args):
             "initiator": args.initiator,
             "commitmsg": args.message,
             "dispatch_id": DISPATCH_ID,
+            "appname:" args.appname,
+            "namespace": args.namespace,
             "ssr": args.ssr
         }
     }
@@ -59,6 +61,8 @@ def process_args():
     parser.add_argument("-initiator", required=True)
     parser.add_argument("-message", required=True)
     parser.add_argument("-token", required=True)
+    parser.add_argument("-appname", required=True)
+    parser.add_argument("-namespace", required=True)
     parser.add_argument("-ssr", required=False, default=False)
 
     args = parser.parse_args()

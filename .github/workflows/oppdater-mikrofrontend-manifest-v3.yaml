@@ -15,6 +15,12 @@ on:
         required: false
         description: "defaulter til siste innslag i gitlog"
         type: string
+      appname:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
       ssr:
         required: false
         type: boolean
@@ -46,5 +52,5 @@ jobs:
         run:  |
           echo "message=$(git log -1 --pretty="format:%s")" >> $GITHUB_ENV
       - run: |
-          python3 python/update_manifest_v2.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }} -ssr ${{ inputs.ssr }}
+          python3 python/update_manifest_v2.py -id ${{ inputs.id }} -url ${{ inputs.url}} -cluster ${{ inputs.cluster }} -initiator ${{ github.actor }} -message "${{ env.message }}" -token ${{ steps.get-token.outputs.token }} -appname ${{ inputs.appname }} -namespace ${{ inputs.namespace }} -ssr ${{ inputs.ssr }}
         name: Oppdater manifest
