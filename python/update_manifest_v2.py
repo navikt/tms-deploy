@@ -27,7 +27,7 @@ HEADERS = {
 
 def create_payload(args):
     return {
-        "event_type": "update_microfrontend_manifest",
+        "event_type": "update_microfrontend_manifest_v2",
         "client_payload": {
             "id": args.id,
             "url": args.url,
