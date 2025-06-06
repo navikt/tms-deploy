@@ -37,6 +37,7 @@ def create_payload(args):
             "dispatch_id": DISPATCH_ID,
             "appname": args.appname,
             "namespace": args.namespace,
+            "fallback": args.fallback,
             "ssr": args.ssr
         }
     }
@@ -63,6 +64,7 @@ def process_args():
     parser.add_argument("-token", required=True)
     parser.add_argument("-appname", required=True)
     parser.add_argument("-namespace", required=True)
+    parser.add_argument("-fallback", required=True)
     parser.add_argument("-ssr", required=False, default=False)
 
     args = parser.parse_args()
