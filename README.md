@@ -4,7 +4,7 @@ Delte GitHub Actions-workflows for applikasjoner i `min-side`.
 
 ## Astro-applikasjoner
 
-`astro-build-deploy-v1.yaml` bygger, tester og deployer Astro SSR-applikasjoner
+`astro-deploy-v1.yaml` bygger, tester og deployer Astro SSR-applikasjoner
 som følger disse konvensjonene:
 
 - pnpm med `pnpm-lock.yaml`
@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: navikt/tms-deploy/.github/workflows/astro-build-deploy-v1.yaml@v1
+    uses: navikt/tms-deploy/.github/workflows/astro-deploy-v1.yaml@v1
     with:
       app-name: tms-eksempel
       clusters: '["dev-gcp"]'
@@ -59,7 +59,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: navikt/tms-deploy/.github/workflows/astro-build-deploy-v1.yaml@v1
+    uses: navikt/tms-deploy/.github/workflows/astro-deploy-v1.yaml@v1
     with:
       app-name: tms-eksempel
       clusters: '["dev-gcp", "prod-gcp"]'
