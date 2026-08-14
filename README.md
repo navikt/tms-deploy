@@ -80,7 +80,7 @@ workflowen er en tillitsgrense for alle kallende repositories.
 | `clusters` | Ja | | JSON-array med clustere |
 | `node-version` | Nei | `24` | Node-versjon |
 | `pnpm-version` | Nei | `10` | pnpm-versjon |
-| `run-e2e` | Nei | `true` | Installer Chromium og kjør Playwright |
+| `run-playwright` | Nei | `true` | Installer Chromium og kjør Playwright |
 | `minimum-release-age` | Nei | `10080` | Minste pakkealder i minutter |
 
 Påkrevde secrets er `READER_TOKEN`, `ASTRO_KEY` og

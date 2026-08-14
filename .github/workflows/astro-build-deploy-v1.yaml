@@ -21,7 +21,7 @@ on:
         required: false
         default: "10"
         type: string
-      run-e2e:
+      run-playwright:
         description: Install Chromium and run Playwright tests
         required: false
         default: true
@@ -86,11 +86,11 @@ jobs:
         run: pnpm run test
 
       - name: Install Playwright browsers
-        if: ${{ inputs.run-e2e }}
+        if: ${{ inputs.run-playwright }}
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run E2E tests
-        if: ${{ inputs.run-e2e }}
+      - name: Run Playwright tests
+        if: ${{ inputs.run-playwright }}
         env:
           ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
           CI: "true"
