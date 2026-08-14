@@ -34,7 +34,7 @@ jobs:
       message: ${{ inputs.commitmsg }}
     steps:
       - uses: "actions/checkout@v4"
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
         name: sett opp python

@@ -23,3 +23,5 @@ jobs:
 
       - name: Validate GitHub Actions workflows
         uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: .github/workflows/astro-build-deploy-v1.yaml
