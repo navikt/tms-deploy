@@ -1,0 +1,141 @@
+name: Build and deploy Astro app
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: Nais application name and default CDN destination
+        required: true
+        type: string
+      clusters:
+        description: JSON array of Nais clusters to deploy to
+        required: true
+        type: string
+      node-version:
+        description: Node.js version
+        required: false
+        default: "24"
+        type: string
+      pnpm-version:
+        description: pnpm version
+        required: false
+        default: "10"
+        type: string
+      run-playwright:
+        description: Install Chromium and run Playwright tests
+        required: false
+        default: true
+        type: boolean
+      minimum-release-age:
+        description: Minimum package release age in minutes
+        required: false
+        default: 10080
+        type: number
+    secrets:
+      READER_TOKEN:
+        description: Token with read access to GitHub Packages
+        required: true
+      ASTRO_KEY:
+        description: Shared secret required by Astro tests and build
+        required: true
+      NAIS_WORKLOAD_IDENTITY_PROVIDER:
+        description: Nais workload identity provider
+        required: true
+    outputs:
+      image:
+        description: Canonical image reference produced by the build
+        value: ${{ jobs.build.outputs.image }}
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  build:
+    name: Build, test, and publish
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.docker-build-push.outputs.image }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          registry-url: https://npm.pkg.github.com
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          MINIMUM_RELEASE_AGE: ${{ inputs.minimum-release-age }}
+          NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
+        run: pnpm install --frozen-lockfile --config.minimum-release-age="$MINIMUM_RELEASE_AGE"
+
+      - name: Run unit and component tests
+        env:
+          ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
+        run: pnpm run test
+
+      - name: Install Playwright browsers
+        if: ${{ inputs.run-playwright }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        if: ${{ inputs.run-playwright }}
+        env:
+          ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
+          CI: "true"
+        run: pnpm run test:e2e
+
+      - name: Build application
+        env:
+          ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
+        run: pnpm run build
+
+      - name: Upload assets to CDN
+        uses: nais/deploy/actions/cdn-upload/v2@v2
+        with:
+          team: min-side
+          source: ./dist/client/_astro
+          destination: ${{ inputs.app-name }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
+      - name: Build and push Docker image
+        id: docker-build-push
+        uses: nais/docker-build-push@v0
+        with:
+          team: min-side
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
+  deploy:
+    name: Deploy to ${{ matrix.cluster }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cluster: ${{ fromJSON(inputs.clusters) }}
+    concurrency:
+      group: astro-deploy-${{ github.repository }}-${{ matrix.cluster }}
+      cancel-in-progress: ${{ matrix.cluster != 'prod-gcp' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Nais
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: ${{ matrix.cluster }}
+          RESOURCE: nais/${{ matrix.cluster }}/nais.yaml
+          VAR: image=${{ needs.build.outputs.image }},version=${{ github.sha }}
