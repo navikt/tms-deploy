@@ -31,16 +31,6 @@ on:
         required: false
         default: 10080
         type: number
-    secrets:
-      READER_TOKEN:
-        description: Token with read access to GitHub Packages
-        required: true
-      ASTRO_KEY:
-        description: Shared secret required by Astro tests and build
-        required: true
-      NAIS_WORKLOAD_IDENTITY_PROVIDER:
-        description: Nais workload identity provider
-        required: true
     outputs:
       image:
         description: Canonical image reference produced by the build

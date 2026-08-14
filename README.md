@@ -36,10 +36,7 @@ jobs:
     with:
       app-name: tms-eksempel
       clusters: '["dev-gcp"]'
-    secrets:
-      READER_TOKEN: ${{ secrets.READER_TOKEN }}
-      ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
-      NAIS_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+    secrets: inherit
 ```
 
 ### Deploy fra main
@@ -63,14 +60,10 @@ jobs:
     with:
       app-name: tms-eksempel
       clusters: '["dev-gcp", "prod-gcp"]'
-    secrets:
-      READER_TOKEN: ${{ secrets.READER_TOKEN }}
-      ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
-      NAIS_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+    secrets: inherit
 ```
 
-Secrets sendes eksplisitt. Ikke bruk `secrets: inherit`, siden den delte
-workflowen er en tillitsgrense for alle kallende repositories.
+Secrets arves fra den kallende workflowen med `secrets: inherit`.
 
 ### Inputs
 
@@ -83,9 +76,16 @@ workflowen er en tillitsgrense for alle kallende repositories.
 | `run-playwright` | Nei | `true` | Installer Chromium og kjør Playwright |
 | `minimum-release-age` | Nei | `10080` | Minste pakkealder i minutter |
 
-Påkrevde secrets er `READER_TOKEN`, `ASTRO_KEY` og
-`NAIS_WORKLOAD_IDENTITY_PROVIDER`. Repositoryet eller organisasjonen må også
-ha variabelen `NAIS_MANAGEMENT_PROJECT_ID`.
+Workflowen bruker disse arvede secrets:
+
+| Secret | Bruk |
+| --- | --- |
+| `READER_TOKEN` | Leser pakker fra GitHub Packages ved installasjon |
+| `ASTRO_KEY` | Gjør nøkkelen tilgjengelig for tester og bygg |
+| `NAIS_WORKLOAD_IDENTITY_PROVIDER` | Autentiserer CDN-opplasting og Docker-bygg mot Nais |
+
+Repositoryet eller organisasjonen må også ha variabelen
+`NAIS_MANAGEMENT_PROJECT_ID`.
 
 Workflowen bruker teamet `min-side`, kjører `pnpm run test` og
 `pnpm run build`, laster opp `./dist/client/_astro` til en CDN-destinasjon
