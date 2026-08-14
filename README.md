@@ -63,7 +63,6 @@ jobs:
     with:
       app-name: tms-eksempel
       clusters: '["dev-gcp", "prod-gcp"]'
-      unit-test-command: pnpm run test:coverage
     secrets:
       READER_TOKEN: ${{ secrets.READER_TOKEN }}
       ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
@@ -81,22 +80,17 @@ workflowen er en tillitsgrense for alle kallende repositories.
 | `clusters` | Ja | | JSON-array med clustere |
 | `node-version` | Nei | `24` | Node-versjon |
 | `pnpm-version` | Nei | `10` | pnpm-versjon |
-| `team` | Nei | `min-side` | Nais-team |
-| `cdn-source` | Nei | `./dist/client/_astro` | Mappe som lastes opp |
-| `cdn-destination` | Nei | `app-name` | Overstyrer CDN-destinasjonen |
-| `nais-resource-template` | Nei | `nais/{0}/nais.yaml` | `{0}` erstattes med cluster |
-| `unit-test-command` | Nei | `pnpm run test` | Kommando for enhets- og komponenttester |
 | `run-e2e` | Nei | `true` | Installer Chromium og kjør Playwright |
-| `build-command` | Nei | `pnpm run build` | Byggekommando |
 | `minimum-release-age` | Nei | `10080` | Minste pakkealder i minutter |
 
 Påkrevde secrets er `READER_TOKEN`, `ASTRO_KEY` og
 `NAIS_WORKLOAD_IDENTITY_PROVIDER`. Repositoryet eller organisasjonen må også
 ha variabelen `NAIS_MANAGEMENT_PROJECT_ID`.
 
-Overstyr bare defaults når applikasjonen faktisk avviker fra konvensjonene.
-Nye felles behov bør legges til som eksplisitte inputs eller secrets i stedet
-for å forgrene workflowen per applikasjon.
+Workflowen bruker teamet `min-side`, kjører `pnpm run test` og
+`pnpm run build`, laster opp `./dist/client/_astro` til en CDN-destinasjon
+med samme navn som `app-name`, og deployer manifestet
+`nais/<cluster>/nais.yaml`.
 
 ## Versjonering
 
@@ -108,8 +102,7 @@ før major-taggen flyttes.
 ## Utrulling
 
 Migrer først `tms-utkast-frontend`, deretter `tms-min-side`. Begge bruker
-standard CDN-kilde, Docker-layout og Nais-stier. `tms-min-side` sender
-`unit-test-command: pnpm run test:coverage` for main-workflowen.
+standard test- og byggekommandoer, CDN-kilde, Docker-layout og Nais-stier.
 
 Et søk etter samme Astro CDN-layout viser flere aktuelle kandidater for en
 senere migreringsrunde, blant annet:

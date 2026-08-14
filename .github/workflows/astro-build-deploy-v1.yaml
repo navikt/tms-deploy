@@ -21,41 +21,11 @@ on:
         required: false
         default: "10"
         type: string
-      team:
-        description: Nais team
-        required: false
-        default: min-side
-        type: string
-      cdn-source:
-        description: Directory containing Astro assets to upload
-        required: false
-        default: ./dist/client/_astro
-        type: string
-      cdn-destination:
-        description: CDN destination; defaults to app-name
-        required: false
-        default: ""
-        type: string
-      nais-resource-template:
-        description: Nais resource path with {0} as the cluster placeholder
-        required: false
-        default: nais/{0}/nais.yaml
-        type: string
-      unit-test-command:
-        description: Unit and component test command
-        required: false
-        default: pnpm run test
-        type: string
       run-e2e:
         description: Install Chromium and run Playwright tests
         required: false
         default: true
         type: boolean
-      build-command:
-        description: Astro build command
-        required: false
-        default: pnpm run build
-        type: string
       minimum-release-age:
         description: Minimum package release age in minutes
         required: false
@@ -113,8 +83,7 @@ jobs:
       - name: Run unit and component tests
         env:
           ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
-          UNIT_TEST_COMMAND: ${{ inputs.unit-test-command }}
-        run: bash -euo pipefail -c "$UNIT_TEST_COMMAND"
+        run: pnpm run test
 
       - name: Install Playwright browsers
         if: ${{ inputs.run-e2e }}
@@ -130,15 +99,14 @@ jobs:
       - name: Build application
         env:
           ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
-          BUILD_COMMAND: ${{ inputs.build-command }}
-        run: bash -euo pipefail -c "$BUILD_COMMAND"
+        run: pnpm run build
 
       - name: Upload assets to CDN
         uses: nais/deploy/actions/cdn-upload/v2@v2
         with:
-          team: ${{ inputs.team }}
-          source: ${{ inputs.cdn-source }}
-          destination: ${{ inputs.cdn-destination || inputs.app-name }}
+          team: min-side
+          source: ./dist/client/_astro
+          destination: ${{ inputs.app-name }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
@@ -146,7 +114,7 @@ jobs:
         id: docker-build-push
         uses: nais/docker-build-push@v0
         with:
-          team: ${{ inputs.team }}
+          team: min-side
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
@@ -169,5 +137,5 @@ jobs:
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: ${{ matrix.cluster }}
-          RESOURCE: ${{ format(inputs.nais-resource-template, matrix.cluster) }}
+          RESOURCE: nais/${{ matrix.cluster }}/nais.yaml
           VAR: image=${{ needs.build.outputs.image }},version=${{ github.sha }}
