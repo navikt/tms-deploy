@@ -8,6 +8,20 @@ on:
       node-version:
         required: true
         type: string
+    # Deklarert slik at callere kan sende secretsene eksplisitt i stedet for `secrets: inherit`.
+    # Uten deklarasjonen avviser GitHub kjøringen til en slik caller før noen jobb starter:
+    # "Secret ... is not defined in the referenced workflow" (startup_failure).
+    # `required: false` er bevisst: dagens callere bruker `inherit`, og de skal fortsette å virke uendret.
+    secrets:
+      READER_TOKEN:
+        required: false
+        description: "Token for å lese @navikt-pakker fra npm.pkg.github.com under `npm ci`."
+      NAIS_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+        description: "Identity provider for CDN-opplasting og image-bygg mot Nais."
+      NAIS_DEPLOY_APIKEY:
+        required: false
+        description: "API-nøkkel for nais/deploy@v1 i deploy-jobben."
 env:
   "IMAGE": "ghcr.io/${{ github.repository }}/mikrofrontend:${{ github.sha }}"
 jobs:
