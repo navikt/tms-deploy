@@ -1,0 +1,43 @@
+name: Digestabot auto-merge
+
+on:
+  workflow_call:
+    secrets:
+      APP_ID:
+        description: "GitHub App ID"
+        required: true
+      PRIVATE_KEY:
+        description: "GitHub App Private Key"
+        required: true
+  workflow_dispatch:
+
+jobs:
+  digestabot-automerge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Automerge digestabot PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: "prs=$(gh pr list --label digestabot --json number,mergeable,statusCheckRollup,author)\n\nif [ -z \"$prs\" ] || [ \"$prs\" = \"[]\" ]; then\n  echo \"No digestabot PRs found\"\n  exit 0\nfi\n\nmerged_count=0\nwhile read -r pr_number; do\n  echo \"Approving and merging PR #$pr_number\"\n  if gh pr review \"$pr_number\" --approve; then\n    if gh pr merge \"$pr_number\" --merge --auto; then\n      merged_count=$((merged_count + 1))\n    fi\n  fi\ndone < <(echo \"$prs\" | jq -r '.[] | \n  select(.author.login == \"app/github-actions\") |\n  select(.mergeable == \"MERGEABLE\") | \n  select(.statusCheckRollup // [] | all(.conclusion == \"SUCCESS\" or .conclusion == \"SKIPPED\")) |\n  .number')\n\necho \"Merged $merged_count digestabot PR(s)\""

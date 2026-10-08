@@ -1,0 +1,97 @@
+name: Dependabot auto-merge
+
+on:
+  workflow_call:
+    inputs:
+      minimum-age-of-pr:
+        description: "Minimum age of PR in days before automerging"
+        required: false
+        type: string
+        default: "2"
+      ignored-dependencies:
+        description: "Comma-separated list of dependencies to ignore"
+        required: false
+        type: string
+        default: ""
+      semver-filter:
+        description: "Semver filter for automerge (e.g., patch, minor, major)"
+        required: false
+        type: string
+        default: "patch,minor"
+      always-allow:
+        description: "Comma-separated list of dependencies to always allow"
+        required: false
+        type: string
+        default: ""
+      required-labels:
+        description: "Only automerge PRs with at least one of these labels (e.g. 'javascript' or 'javascript,java'). Empty means all Dependabot PRs are considered."
+        required: false
+        type: string
+        default: ""
+      auto-approve:
+        description: "Whether to automatically approve PRs before merging them"
+        required: false
+        type: boolean
+        default: true
+      merge-method:
+        description: "The merge method to use when merging pull requests (merge, squash, rebase)"
+        required: false
+        type: string
+        default: "merge"
+    secrets:
+      APP_ID:
+        description: "GitHub App ID"
+        required: true
+      PRIVATE_KEY:
+        description: "GitHub App Private Key"
+        required: true
+  workflow_dispatch:
+
+jobs:
+  dependabot-automerge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      merged-pr-count: ${{ steps.automerge.outputs.merged-pr-count }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Automerge Dependabot PRs
+        id: automerge
+        uses: navikt/automerge-dependabot@main
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          minimum-age-of-pr: ${{ inputs.minimum-age-of-pr }}
+          blackout-periods: "Sat,Sun,May 1,May 17,Dec 24-Jan 3"
+          ignored-dependencies: ${{ inputs.ignored-dependencies }}
+          semver-filter: ${{ inputs.semver-filter }}
+          always-allow: ${{ inputs.always-allow }}
+          required-labels: ${{ inputs.required-labels }}
+          auto-approve: ${{ inputs.auto-approve }}
+          merge-method: ${{ inputs.merge-method }}
+
+      - name: Automerge results
+        run: |
+          echo "Automerge Results:"
+          echo "Number of merged PRs: $MERGED_PR_COUNT"
+          if [ "$MERGED_PR_COUNT" != "0" ]; then
+            echo "$MERGED_PR_COUNT PR(s) merged. Deployment workflows will be triggered automatically by the merge event."
+          else
+            echo "No PRs were merged."
+          fi
+        env:
+          MERGED_PR_COUNT: ${{ steps.automerge.outputs.merged-pr-count }}
