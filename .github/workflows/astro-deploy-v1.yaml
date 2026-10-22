@@ -92,6 +92,7 @@ jobs:
         run: pnpm run build
 
       - name: Upload assets to CDN
+        if: github.event_name != 'pull_request'
         uses: nais/deploy/actions/cdn-upload/v2@v2
         with:
           team: min-side
@@ -101,6 +102,7 @@ jobs:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
       - name: Build and push Docker image
+        if: github.event_name != 'pull_request'
         id: docker-build-push
         uses: nais/docker-build-push@v0
         with:
@@ -110,6 +112,7 @@ jobs:
 
   deploy:
     name: Deploy to ${{ matrix.cluster }}
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     strategy:
