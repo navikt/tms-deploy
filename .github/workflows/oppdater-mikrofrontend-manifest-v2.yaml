@@ -15,6 +15,17 @@ on:
         required: false
         description: "defaulter til siste innslag i gitlog"
         type: string
+    # Deklarert slik at callere kan sende secretsene eksplisitt i stedet for `secrets: inherit`.
+    # Uten deklarasjonen avviser GitHub kjøringen til en slik caller før noen jobb starter:
+    # "Secret PRIVATE_KEY is not defined in the referenced workflow" (startup_failure).
+    # `required: false` er bevisst: dagens callere bruker `inherit`, og de skal fortsette å virke uendret.
+    secrets:
+      PRIVATE_KEY:
+        required: false
+        description: "Privat nøkkel til GitHub-appen som oppdaterer manifestet. Må være tilgjengelig – enten sendt eksplisitt eller arvet."
+      APP_ID:
+        required: false
+        description: "App-ID til den samme GitHub-appen."
 jobs:
   trigger_manifest_update:
     runs-on: ubuntu-latest
