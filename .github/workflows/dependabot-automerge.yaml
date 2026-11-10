@@ -57,12 +57,12 @@ jobs:
       merged-pr-count: ${{ steps.automerge.outputs.merged-pr-count }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # ratchet:step-security/harden-runner@v2.22.4
         with:
           egress-policy: audit
 
       - name: Create GitHub App Token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # ratchet:actions/create-github-app-token@v3
         id: app-token
         with:
           client-id: ${{ secrets.APP_ID }}
@@ -72,7 +72,7 @@ jobs:
 
       - name: Automerge Dependabot PRs
         id: automerge
-        uses: navikt/automerge-dependabot@main
+        uses: navikt/automerge-dependabot@3f1088eb3eadd16f4486866844e3cb2bc08b88c2 # ratchet:navikt/automerge-dependabot@main
         with:
           token: ${{ steps.app-token.outputs.token }}
           minimum-age-of-pr: ${{ inputs.minimum-age-of-pr }}
