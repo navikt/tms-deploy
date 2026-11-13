@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    exclude-paths:
+      - ".github/workflows/oppdater-mikrofrontend-manifest*.yaml"
+    schedule:
+      interval: "weekly"
+      time: "08:00"
+      timezone: "Europe/Oslo"
+    open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
