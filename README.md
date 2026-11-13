@@ -2,95 +2,23 @@
 
 Delte GitHub Actions-workflows for applikasjoner i `min-side`.
 
-## Astro-applikasjoner
+## Workflows
 
-`astro-deploy-v1.yaml` bygger, tester og deployer Astro SSR-applikasjoner
-som følger disse konvensjonene:
-
-- pnpm med `pnpm-lock.yaml`
-- Node 24 og pnpm 10
-- statiske Astro-ressurser i `dist/client/_astro`
-- `Dockerfile` i rotmappen
-- Nais-manifester i `nais/<cluster>/nais.yaml`
-
-Workflowen installerer avhengigheter, kjører enhetstester og Playwright, bygger
-applikasjonen, laster opp statiske ressurser til CDN, bygger Docker-image og
-deploy-er samme image til alle oppgitte clustere.
-
-### Deploy til dev
-
-```yaml
-name: Deploy dev
-
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  id-token: write
-  packages: write
-
-jobs:
-  deploy:
-    uses: navikt/tms-deploy/.github/workflows/astro-deploy-v1.yaml@v1
-    with:
-      app-name: tms-eksempel
-      clusters: '["dev-gcp"]'
-    secrets: inherit
-```
-
-### Deploy fra main
-
-```yaml
-name: Deploy main
-
-on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: read
-  id-token: write
-  packages: write
-
-jobs:
-  deploy:
-    uses: navikt/tms-deploy/.github/workflows/astro-deploy-v1.yaml@v1
-    with:
-      app-name: tms-eksempel
-      clusters: '["dev-gcp", "prod-gcp"]'
-    secrets: inherit
-```
-
-Secrets arves fra den kallende workflowen med `secrets: inherit`.
-
-### Inputs
-
-| Input | Påkrevd | Standard | Beskrivelse |
-| --- | --- | --- | --- |
-| `app-name` | Ja | | Nais-appnavn og standard CDN-destinasjon |
-| `clusters` | Ja | | JSON-array med clustere |
-| `node-version` | Nei | `24` | Node-versjon |
-| `pnpm-version` | Nei | `10` | pnpm-versjon |
-| `run-playwright` | Nei | `true` | Installer Chromium og kjør Playwright |
-| `minimum-release-age` | Nei | `10080` | Minste pakkealder i minutter |
-
-Workflowen bruker disse arvede secrets:
-
-| Secret | Bruk |
+| Workflow | Beskrivelse |
 | --- | --- |
-| `READER_TOKEN` | Leser pakker fra GitHub Packages ved installasjon |
-| `ASTRO_KEY` | Gjør nøkkelen tilgjengelig for tester og bygg |
-| `NAIS_WORKLOAD_IDENTITY_PROVIDER` | Autentiserer CDN-opplasting og Docker-bygg mot Nais |
+| `astro-deploy-v1.yaml` | Bygger, tester og deployer Astro SSR-applikasjoner: installerer avhengigheter, kjører enhetstester og Playwright, laster opp statiske ressurser til CDN, bygger Docker-image og deployer samme image til alle oppgitte clustere. Se [docs/astro-deploy](docs/astro-deploy/README.md). |
+| `dependabot-automerge.yaml` | Automerger Dependabot-PR-er via `navikt/automerge-dependabot` basert på alder, semver-filter og labels, med blackout-perioder for helger og helligdager. Kan auto-godkjenne før merge. |
+| `digestabot-automerge.yaml` | Godkjenner og automerger digestabot-PR-er (oppdatering av image-digests) som er mergebare og har grønne checks, via `gh`-kommandoer. |
+| `oppdater-mikrofrontend-manifest.yaml` | Trigger en oppdatering av mikrofrontendmanifestet ved å sende en `repository_dispatch` til `navikt/tms-mikrofrontend-selector`. |
+| `oppdater-mikrofrontend-manifest-v2.yaml` | Oppdaterer mikrofrontendmanifestet direkte med Python-scriptet `update_manifest.py` (henter script fra repoet og kjører det mot gitt cluster, id og url). |
+| `oppdater-mikrofrontend-manifest-v3.yaml` | Som v2, men med `update_manifest_v2.py` og ekstra felt for `appname`, `namespace`, `fallback` og `ssr`. |
+| `validate-workflows.yaml` | Kjører `actionlint` på workflow-filene ved PR-er og push til `main`. |
 
-Repositoryet eller organisasjonen må også ha variabelen
-`NAIS_MANAGEMENT_PROJECT_ID`.
+## astro-deploy
 
-Workflowen bruker teamet `min-side`, kjører `pnpm run test` og
-`pnpm run build`, laster opp `./dist/client/_astro` til en CDN-destinasjon
-med samme navn som `app-name`, og deployer manifestet
-`nais/<cluster>/nais.yaml`.
+`astro-deploy-v1.yaml` er hovedworkflowen for Astro SSR-applikasjoner.
+Dokumentasjon med konvensjoner, eksempler på kallere, inputs og secrets ligger
+i [docs/astro-deploy](docs/astro-deploy/README.md).
 
 ## Versjonering
 
@@ -98,24 +26,6 @@ Kallere bruker major-taggen `@v1`. Bakoverkompatible rettelser kan flytte
 `v1`, mens kontraktsbrudd publiseres som en ny major-versjon. Endringer i en
 delt workflow skal behandles som endringer i CI/CD-tillitsgrensen og reviewes
 før major-taggen flyttes.
-
-## Utrulling
-
-Migrer først `tms-utkast-frontend`, deretter `tms-min-side`. Begge bruker
-standard test- og byggekommandoer, CDN-kilde, Docker-layout og Nais-stier.
-
-Et søk etter samme Astro CDN-layout viser flere aktuelle kandidater for en
-senere migreringsrunde, blant annet:
-
-- `tms-varsler-frontend`
-- `tms-utbetalingsoversikt-frontend`
-- `tms-test-producer-frontend`
-- `tms-dokumentarkiv-frontend`
-- `tms-microfrontend-template-ssr`
-
-Kontroller hvert repository mot konvensjonene før migrering. Monorepositories,
-feature branch-deploy og apper som oppdaterer mikrofrontendmanifest trenger
-egen vurdering før workflow-kontrakten eventuelt utvides.
 
 ## Eldre mikrofrontends
 
