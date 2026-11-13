@@ -127,7 +127,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Deploy to Nais
-        uses: nais/deploy/actions/deploy@v0
+        uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: nais/${{ matrix.cluster }}/nais.yaml
