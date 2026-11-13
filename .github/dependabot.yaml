@@ -9,6 +9,8 @@ updates:
       time: "08:00"
       timezone: "Europe/Oslo"
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "nais/deploy/actions/deploy"
     groups:
       github-actions:
         patterns:
