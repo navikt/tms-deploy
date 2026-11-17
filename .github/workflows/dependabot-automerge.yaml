@@ -38,6 +38,11 @@ on:
         required: false
         type: string
         default: "merge"
+      merge-queue:
+        description: "How to handle merge queues: 'false' merges directly, 'auto' detects a merge queue rule and adds the PR to the queue, 'true' always queues"
+        required: false
+        type: string
+        default: "false"
     secrets:
       APP_ID:
         description: "GitHub App ID"
@@ -55,6 +60,7 @@ jobs:
       pull-requests: write
     outputs:
       merged-pr-count: ${{ steps.automerge.outputs.merged-pr-count }}
+      queued-pr-count: ${{ steps.automerge.outputs.queued-pr-count }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # ratchet:step-security/harden-runner@v2.22.4
@@ -83,15 +89,18 @@ jobs:
           required-labels: ${{ inputs.required-labels }}
           auto-approve: ${{ inputs.auto-approve }}
           merge-method: ${{ inputs.merge-method }}
+          merge-queue: ${{ inputs.merge-queue }}
 
       - name: Automerge results
         run: |
           echo "Automerge Results:"
           echo "Number of merged PRs: $MERGED_PR_COUNT"
-          if [ "$MERGED_PR_COUNT" != "0" ]; then
-            echo "$MERGED_PR_COUNT PR(s) merged. Deployment workflows will be triggered automatically by the merge event."
+          echo "Number of queued PRs: $QUEUED_PR_COUNT"
+          if [ "$MERGED_PR_COUNT" = "0" ] && [ "$QUEUED_PR_COUNT" = "0" ]; then
+            echo "No PRs were merged or queued."
           else
-            echo "No PRs were merged."
+            echo "Deployment workflows will be triggered when the PRs are merged."
           fi
         env:
           MERGED_PR_COUNT: ${{ steps.automerge.outputs.merged-pr-count }}
+          QUEUED_PR_COUNT: ${{ steps.automerge.outputs.queued-pr-count }}

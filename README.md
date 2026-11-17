@@ -20,6 +20,16 @@ Delte GitHub Actions-workflows for applikasjoner i `min-side`.
 Dokumentasjon med konvensjoner, eksempler på kallere, inputs og secrets ligger
 i [docs/astro-deploy](docs/astro-deploy/README.md).
 
+## Dependabot-automerge og merge queue
+
+Merge queue er opt-in. Inputen `merge-queue` styrer hvordan `dependabot-automerge.yaml` merger:
+`"false"` (standard) merger alltid direkte, `"auto"` legger PR-en i kø hvis
+målbranchen har en `merge_queue`-regel og merger direkte ellers, og `"true"`
+legger alltid i kø. Repoer som aktiverer merge queue må sette `merge-queue: "auto"`
+(eller `"true"`) i kallerens `with`. Ved kø ignoreres `merge-method`, og workflows
+med påkrevde sjekker må trigges på `merge_group`. Jobben har outputene
+`merged-pr-count` og `queued-pr-count`; PR-er i kø telles ikke som merget.
+
 ## Versjonering
 
 Kallere bruker major-taggen `@v1`. Bakoverkompatible rettelser kan flytte
