@@ -61,6 +61,22 @@ jobs:
 
 Secrets arves fra den kallende workflowen med `secrets: inherit`.
 
+## Pull requests og merge queue
+
+På `pull_request`, `merge_group` og `push` til `gh-readonly-queue/**` kjører
+workflowen bare tester og bygg. CDN-opplasting, Docker-push og deploy hoppes
+over. Jobben `Build, test, and publish` kan brukes som påkrevd sjekk.
+
+```yaml
+on:
+  pull_request:
+  merge_group:
+    types: [checks_requested]
+  push:
+    branches:
+      - main
+```
+
 ## Inputs
 
 | Input | Påkrevd | Standard | Beskrivelse |

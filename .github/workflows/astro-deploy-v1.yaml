@@ -92,7 +92,7 @@ jobs:
         run: pnpm run build
 
       - name: Upload assets to CDN
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/')
         uses: nais/deploy/actions/cdn-upload/v2@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # ratchet:nais/deploy/actions/cdn-upload/v2@v3
         with:
           team: min-side
@@ -102,7 +102,7 @@ jobs:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
       - name: Build and push Docker image
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/')
         id: docker-build-push
         uses: nais/docker-build-push@ceabe305c64640175f133b7e59af6666b0a3c46c # ratchet:nais/docker-build-push@v0
         with:
@@ -112,7 +112,7 @@ jobs:
 
   deploy:
     name: Deploy to ${{ matrix.cluster }}
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/')
     needs: build
     runs-on: ubuntu-latest
     strategy:
