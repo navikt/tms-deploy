@@ -8,7 +8,6 @@ Delte GitHub Actions-workflows for applikasjoner i `min-side`.
 | --- |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `astro-deploy-v1.yaml` | Bygger, tester og deployer Astro SSR-applikasjoner. Se [docs/astro-deploy](docs/astro-deploy/README.md). |
 | `dependabot-automerge.yaml` | Automerger Dependabot-PR-er via `navikt/automerge-dependabot`. Kan auto-godkjenne før merge. |
-| `digestabot-automerge.yaml` | Godkjenner og automerger digestabot-PR-er (oppdatering av image-digests) som er mergebare. |
 | `oppdater-mikrofrontend-manifest.yaml` | Trigger en oppdatering av mikrofrontendmanifestet ved å sende en `repository_dispatch` til `navikt/tms-mikrofrontend-selector`.                                                  |
 | `oppdater-mikrofrontend-manifest-v2.yaml` | Oppdaterer mikrofrontendmanifestet direkte med Python-scriptet `update_manifest.py` (henter script fra repoet og kjører det mot gitt cluster, id og url).                        |
 | `oppdater-mikrofrontend-manifest-v3.yaml` | Som v2, men med `update_manifest_v2.py` og ekstra felt for `appname`, `namespace`, `fallback` og `ssr`.                                                                          |
