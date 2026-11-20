@@ -61,6 +61,22 @@ jobs:
 
 Secrets arves fra den kallende workflowen med `secrets: inherit`.
 
+### Slå av deploy til dev fra main
+
+Med `deploy-dev: false` hoppes alle clustere som starter med `dev-` over, mens
+resten av `clusters` deployes som vanlig. Inputen kan styres av en
+repository-variabel, slik at dev-deploy kan slås av uten å endre workflowen:
+
+```yaml
+    with:
+      app-name: tms-eksempel
+      clusters: '["dev-gcp", "prod-gcp"]'
+      deploy-dev: ${{ vars.DEPLOY_DEV != 'false' }}
+```
+
+Sett variabelen `DEPLOY_DEV` til `false` for å slå av dev-deploy. Hvis ingen
+clustere gjenstår, hoppes deploy-jobben over.
+
 ## Pull requests og merge queue
 
 På `pull_request`, `merge_group` og `push` til `gh-readonly-queue/**` kjører
@@ -86,6 +102,7 @@ on:
 | `node-version` | Nei | `24` | Node-versjon |
 | `pnpm-version` | Nei | `10` | pnpm-versjon |
 | `run-playwright` | Nei | `true` | Installer Chromium og kjør Playwright |
+| `deploy-dev` | Nei | `true` | Deploy til `dev-*`-clustere i `clusters`. `false` hopper over dev |
 | `minimum-release-age` | Nei | `10080` | Minste pakkealder i minutter |
 
 Workflowen bruker disse arvede secrets:

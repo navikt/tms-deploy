@@ -26,6 +26,11 @@ on:
         required: false
         default: true
         type: boolean
+      deploy-dev:
+        description: Deploy to dev-* clusters in the clusters list. Set to false to skip dev
+        required: false
+        default: true
+        type: boolean
       minimum-release-age:
         description: Minimum package release age in minutes
         required: false
@@ -47,7 +52,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
+      clusters: ${{ steps.clusters.outputs.clusters }}
     steps:
+      - name: Resolve deploy clusters
+        id: clusters
+        env:
+          CLUSTERS: ${{ inputs.clusters }}
+          DEPLOY_DEV: ${{ inputs.deploy-dev }}
+        run: |
+          if [ "$DEPLOY_DEV" = "true" ]; then
+            filter='.'
+          else
+            filter='map(select(startswith("dev-") | not))'
+          fi
+          clusters="$(jq -c "$filter" <<< "$CLUSTERS")"
+          echo "Deploying to: $clusters"
+          echo "clusters=$clusters" >> "$GITHUB_OUTPUT"
+
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
@@ -112,13 +133,13 @@ jobs:
 
   deploy:
     name: Deploy to ${{ matrix.cluster }}
-    if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/')
+    if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && needs.build.outputs.clusters != '[]'
     needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        cluster: ${{ fromJSON(inputs.clusters) }}
+        cluster: ${{ fromJSON(needs.build.outputs.clusters) }}
     concurrency:
       group: astro-deploy-${{ github.repository }}-${{ matrix.cluster }}
       cancel-in-progress: ${{ matrix.cluster != 'prod-gcp' }}
