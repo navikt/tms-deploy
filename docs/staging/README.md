@@ -82,7 +82,13 @@ allerede plassen, viser staging forrige bygg til konflikten er løst.
    staging-verten for hvert API nettleseren kaller, og
    `- application: <app>-staging` i `accessPolicy.inbound` for hver backend
    som kalles fra serveren.
-6. Kjør «Run workflow» på main én gang. Det oppretter staging-appen med main.
+6. I et offentlig repo: legg inn en Actions-policy (Settings → Actions →
+   Policies) for `.github/workflows/staging.yaml` som tillater `pull_request`,
+   `pull_request_target` og `workflow_dispatch`. Regelen er en tillatt-liste, så
+   alle tre må stå der. Fra 2. desember 2026 blokkerer GitHub
+   `pull_request_target` i offentlige repoer uten en slik policy, og da feiler
+   overgangen tilbake til main og konfliktbeskjeden.
+7. Kjør «Run workflow» på main én gang. Det oppretter staging-appen med main.
 
 ### Kallende workflow
 
