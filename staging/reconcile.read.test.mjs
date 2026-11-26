@@ -192,14 +192,14 @@ test('pollMergeable returns at once when mergeable is false', async () => {
   assert.equal(fake.callsTo('pulls.get').length, 1);
 });
 
-test('readState reads mergeParents and liveMainSha', async () => {
+test('readState reads mergeParents and does not read main', async () => {
   const fake = newFake();
   addLabelledPr(fake, 7);
   const state = await read(fake);
-  assert.equal(state.liveMainSha, MAIN);
+  assert.equal('liveMainSha' in state, false);
   assert.deepEqual(state.labelledPrs[0].mergeParents, [MAIN, HEAD]);
   assert.equal(state.labelledPrs[0].mergeSha, MERGE);
-  assert.equal(fake.callsTo('repos.getCommit').some(c => c.params.ref === 'main'), true);
+  assert.equal(fake.callsTo('repos.getCommit').some(c => c.params.ref === 'main'), false);
 });
 
 test('readState keeps mergeSha but no parents when the PR is conflicted without a merge commit', async () => {

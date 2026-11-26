@@ -149,7 +149,6 @@ export async function readState({
     if (labelled !== null) labelledPrs.push(labelled);
   }
 
-  const { data: main } = await github.rest.repos.getCommit({ owner, repo, ref: 'main' });
   const deployed = await readDeployed({ github, owner, repo, event });
 
   if (deployed?.kind === 'pr' && !labelledPrs.some(p => p.number === deployed.pr)) {
@@ -169,7 +168,7 @@ export async function readState({
     if (!isOpenAndLabelled(pull, label, event.prNumber)) currentEvent = { ...event, eventSaysLabelled: false };
   }
 
-  return { event: currentEvent, labelledPrs, deployed, liveMainSha: main.sha, repo: `${owner}/${repo}` };
+  return { event: currentEvent, labelledPrs, deployed, repo: `${owner}/${repo}` };
 }
 
 const BOT_LOGIN = 'github-actions[bot]';

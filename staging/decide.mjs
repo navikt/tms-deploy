@@ -16,12 +16,11 @@ function isEligible(pr) {
   );
 }
 
-function mergeability(pr, { event, liveMainSha }) {
+function mergeability(pr) {
   if (pr.mergeable === false) return 'conflicted';
   if (pr.mergeable !== true) return 'unknown';
-  const [mainParent, headParent] = pr.mergeParents ?? [];
+  const [, headParent] = pr.mergeParents ?? [];
   if (headParent !== pr.headSha) return 'unknown';
-  if (event.name === 'workflow_dispatch' && mainParent !== liveMainSha) return 'unknown';
   return 'buildable';
 }
 
@@ -85,7 +84,7 @@ export function decide(input) {
 
   const holder =
     eligible.find((pr) => pr.number === deployedPr) ??
-    eligible.filter((pr) => mergeability(pr, input) !== 'conflicted').sort(byLabelledAt)[0] ??
+    eligible.filter((pr) => mergeability(pr) !== 'conflicted').sort(byLabelledAt)[0] ??
     null;
 
   let target = { kind: 'keep' };
@@ -106,7 +105,7 @@ export function decide(input) {
   } else {
     const isCurrent = holder.number === deployedPr && holder.headSha === deployed.headSha;
     if (isDispatch || !isCurrent) {
-      const state = mergeability(holder, input);
+      const state = mergeability(holder);
       if (state === 'unknown') throw notReady(holder);
       if (state === 'conflicted') {
         comments.push({

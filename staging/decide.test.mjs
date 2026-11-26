@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { decide, StagingStateError } from './decide.mjs';
 
-const LIVE_MAIN = 'main1';
+const MAIN_SHA = 'main1';
 const OLDER = '2026-11-20T10:00:00Z';
 const YOUNGER = '2026-11-21T10:00:00Z';
 const YOUNGEST = '2026-11-22T10:00:00Z';
@@ -20,7 +20,7 @@ function pr({ number, labelledAt = OLDER, headSha = `head${number}`, ...override
     labelledAt,
     mergeable: true,
     mergeSha: `merge${number}`,
-    mergeParents: [LIVE_MAIN, headSha],
+    mergeParents: [MAIN_SHA, headSha],
     ...overrides,
   };
 }
@@ -67,8 +67,8 @@ function deepFreeze(value) {
   return value;
 }
 
-const input = ({ event, labelledPrs = [], deployed = null, liveMainSha = LIVE_MAIN }) =>
-  deepFreeze({ event, labelledPrs, deployed, liveMainSha, repo: 'navikt/tms-test' });
+const input = ({ event, labelledPrs = [], deployed = null }) =>
+  deepFreeze({ event, labelledPrs, deployed, repo: 'navikt/tms-test' });
 
 const KEEP = { kind: 'keep' };
 const MAIN = { kind: 'main' };
@@ -480,19 +480,31 @@ test('missing triggering PR throws', () => {
   );
 });
 
-test('dispatch refresh with a stale main parent throws', () => {
-  const holder = pr({ number: 180, mergeParents: ['main0', 'head180'] });
-
-  assertRetry(
-    () =>
-      decide(
-        input({ event: workflowDispatch(), labelledPrs: [holder], deployed: deployedPr(holder) }),
-      ),
-    /#180/,
+test('dispatch builds a waiting PR whose stored merge has an older main parent', () => {
+  const waiting = pr({ number: 190, mergeParents: ['main0', 'head190'] });
+  const decision = decide(
+    input({ event: workflowDispatch(), labelledPrs: [waiting], deployed: deployedMain() }),
   );
+
+  assert.deepStrictEqual(decision, {
+    target: { ...buildOf(waiting), mainSha: 'main0' },
+    ...nothingElse,
+  });
 });
 
-test('a main parent behind live main does not stop a build outside workflow_dispatch', () => {
+test('dispatch refresh with a main parent behind main rebuilds the stored merge', () => {
+  const holder = pr({ number: 180, mergeParents: ['main0', 'head180'] });
+  const decision = decide(
+    input({ event: workflowDispatch(), labelledPrs: [holder], deployed: deployedPr(holder) }),
+  );
+
+  assert.deepStrictEqual(decision, {
+    target: { ...buildOf(holder), mainSha: 'main0' },
+    ...nothingElse,
+  });
+});
+
+test('a pull_request build accepts a merge whose main parent is behind main', () => {
   const holder = pr({ number: 180, mergeParents: ['main0', 'head180'] });
   const decision = decide(
     input({
@@ -514,7 +526,7 @@ test('mergeable PR whose merge commit was made from another head throws', () => 
       decide(
         input({
           event: pullRequest('synchronize', 180),
-          labelledPrs: [pr({ number: 180, mergeParents: [LIVE_MAIN, 'old180'] })],
+          labelledPrs: [pr({ number: 180, mergeParents: [MAIN_SHA, 'old180'] })],
           deployed: deployedMain(),
         }),
       ),

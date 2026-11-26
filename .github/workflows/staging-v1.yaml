@@ -143,7 +143,7 @@ jobs:
         run: |
           sha="$(git rev-parse HEAD)"
           if [ "$sha" != "$MERGE_SHA" ]; then
-            echo "::error::PR-en eller main har endret seg siden beslutningen (sjekket ut $sha, ventet $MERGE_SHA), prøv igjen"
+            echo "::error::PR-en har endret seg eller GitHub har laget flettingen på nytt siden beslutningen (sjekket ut $sha, ventet $MERGE_SHA), prøv igjen"
             exit 1
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"

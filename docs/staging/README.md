@@ -10,7 +10,9 @@ eller labelen er fjernet. Da går staging tilbake til main.
   ellers som dev.
 - Felles vert for teamet:
   `https://min-side-staging.ansatt.dev.nav.no/<appens vanlige sti>`.
-- Det som bygges er PR-en flettet med main slik main er når bygget starter.
+- Det som bygges er flettingen GitHub har laget av PR-en og main. GitHub lager
+  den på nytt når PR-en får en push, eller når den er over 12 timer gammel, så
+  main i bygget kan være omtrent 12 timer eldre enn nyeste main.
 - Samme enhetstester og Playwright som i dev-deployen kjøres før deploy.
 
 Staging er ikke et eget miljø. Appen bruker backendene i dev, med de samme
@@ -26,12 +28,14 @@ Pusher til main endrer ikke det som ligger på staging.
    staging-appen. PR-en får én statuskommentar som oppdateres etter hvert, med
    lenke og en ferdig linje til PO som kan limes inn i Slack.
 3. Hver push til PR-en bygger og deployer på nytt. Vil du ha med nyere main,
-   trykk «Update branch» på PR-en eller kjør workflowen med «Run workflow».
+   trykk «Update branch» på PR-en eller push en ny commit.
 4. Når PR-en merges eller lukkes, eller labelen fjernes, går staging tilbake
    til main. Venter en annen PR med labelen, tar den plassen i stedet.
 
 «Run workflow» på main kan alltid brukes til å rette opp staging. Den bygger
-PR-en som har plassen mot nyeste main, eller main hvis ingen har den.
+PR-en som har plassen på nytt med flettingen GitHub har for den, eller main
+hvis ingen har den. Nyere main kommer med «Update branch» eller en push, eller
+når flettingen er over 12 timer gammel.
 
 ### Statuskommentaren
 
@@ -130,8 +134,10 @@ jobs:
 ```
 
 Kalleren må gi alle tillatelsene over, fordi en kalt workflow bare kan beholde
-eller senke dem. Filen må ligge på main før en PR får labelen. Ikke bruk jobben
-som påkrevd sjekk.
+eller senke dem. Filen må ligge på main før en PR får labelen. En PR som var
+åpen før filen kom på main, kan trenge «Update branch» eller en push før labelen
+virker, fordi GitHub kjører workflowen fra flettingen til PR-en. Ikke bruk
+jobben som påkrevd sjekk.
 
 ### Nais-manifest
 
@@ -274,8 +280,8 @@ Disse valgene bør ikke endres uten å vite hvorfor de er der:
   et workflow-uttrykk.
 - Usikker tilstand stopper kjøringen. Mangler et felt, eller har GitHub ikke
   regnet ut flettingen ennå, feiler kjøringen i stedet for å gjette. Det samme
-  skjer når PR-en eller main har endret seg mellom beslutningen og
-  utsjekkingen.
+  skjer når PR-en har endret seg, eller GitHub har laget flettingen på nytt,
+  mellom beslutningen og utsjekkingen.
 - GitHub starter ingen `pull_request`-kjøring for en PR med konflikt.
   `staging-conflict-v1.yaml` finnes for at en slik PR likevel skal få beskjed
   når den får labelen. Den skriver bare kommentaren: labelen blir stående,

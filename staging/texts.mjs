@@ -53,7 +53,7 @@ export function onStagingBody({ url, headSha, mainSha, builtAt, displayName, tit
     `**På staging nå:** ${url}`,
     `Bygget fra \`${short(headSha)}\` flettet med main \`${short(mainSha)}\`, ${formatOsloTime(builtAt)}.`,
     `Til PO (kopier til Slack): «${displayName}: ${escapeTitle(title)} (#${number}) er klar til test: ${url}. Logg inn med testbrukeren din.»`,
-    'Nye pusher oppdaterer staging. Vil du ha med nyere main, trykk «Update branch» eller kjør workflowen på nytt. Fjern `staging` når testen er ferdig.',
+    'Nye pusher oppdaterer staging. Vil du ha med nyere main, trykk «Update branch» eller push en ny commit. Fjern `staging` når testen er ferdig.',
   ].join('\n');
 }
 

@@ -21,7 +21,7 @@ test('onStagingBody is the whole comment, marker first', () => {
     '**På staging nå:** https://tms-dokumentarkiv-staging.ansatt.dev.nav.no',
     'Bygget fra `bbbbbbb` flettet med main `a1b2c3d`, 25.11 kl. 10:05.',
     'Til PO (kopier til Slack): «Dokumentarkiv: Vis dokumenter (#180) er klar til test: https://tms-dokumentarkiv-staging.ansatt.dev.nav.no. Logg inn med testbrukeren din.»',
-    'Nye pusher oppdaterer staging. Vil du ha med nyere main, trykk «Update branch» eller kjør workflowen på nytt. Fjern `staging` når testen er ferdig.',
+    'Nye pusher oppdaterer staging. Vil du ha med nyere main, trykk «Update branch» eller push en ny commit. Fjern `staging` når testen er ferdig.',
   ].join('\n'));
 });
 

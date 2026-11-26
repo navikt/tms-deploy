@@ -126,7 +126,6 @@ function labelledPrFake() {
     mergeable: true, merge_commit_sha: MERGE, state: 'open', labels: [{ name: LABEL }],
   });
   fake.store.events.set(7, [{ event: 'labeled', label: { name: LABEL }, created_at: '2026-11-25T08:00:00Z' }]);
-  fake.store.commits.set('main', { sha: MAIN });
   fake.store.commits.set(MERGE, { sha: MERGE, parents: [{ sha: MAIN }, { sha: HEAD }] });
   return fake;
 }
