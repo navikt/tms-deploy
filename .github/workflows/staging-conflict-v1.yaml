@@ -1,0 +1,61 @@
+name: Staging conflict notice
+
+on:
+  workflow_call:
+    inputs:
+      label:
+        description: Label that puts a pull request on staging
+        required: false
+        default: staging
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  notice:
+    name: Conflict notice
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: staging-conflict-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Find the staging tooling
+        env:
+          WORKFLOW_REPOSITORY: ${{ job.workflow_repository }}
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
+        run: |
+          echo "Staging-verktøy: $WORKFLOW_REPOSITORY@$WORKFLOW_SHA"
+          if [ -z "$WORKFLOW_REPOSITORY" ] || [ -z "$WORKFLOW_SHA" ]; then
+            echo "::error::job.workflow_repository eller job.workflow_sha er tom, så staging-verktøyene kan ikke hentes"
+            exit 1
+          fi
+
+      - name: Check out the staging tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .tms-deploy
+          persist-credentials: false
+
+      - name: Keep the tooling outside the workspace
+        run: cp -R .tms-deploy/staging "$RUNNER_TEMP/staging-tooling"
+
+      - name: Tell the pull request about a conflict with main
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          LABEL: ${{ inputs.label }}
+        with:
+          script: |
+            const { noticeConflict } = await import(`${process.env.RUNNER_TEMP}/staging-tooling/conflict.mjs`);
+            core.info(await noticeConflict({
+              github,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pr: context.payload.pull_request.number,
+              label: process.env.LABEL,
+            }));

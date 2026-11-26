@@ -1,0 +1,32 @@
+name: Test staging
+
+on:
+  pull_request:
+    paths:
+      - "staging/**"
+      - ".github/workflows/test-staging.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "staging/**"
+      - ".github/workflows/test-staging.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # ratchet:actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Run tests
+        run: node --test "staging/*.test.mjs"

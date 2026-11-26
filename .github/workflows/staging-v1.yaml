@@ -1,0 +1,295 @@
+name: Staging
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: Nais application name in dev, used only as the CDN destination
+        required: true
+        type: string
+      staging-app:
+        description: Nais application name of the staging app
+        required: true
+        type: string
+      staging-url:
+        description: URL where the staging app is opened
+        required: true
+        type: string
+      display-name:
+        description: Application name shown in the status comment
+        required: true
+        type: string
+      manifest:
+        description: Nais manifest of the staging app
+        required: false
+        default: nais/dev-gcp/staging.yaml
+        type: string
+      label:
+        description: Label that puts a pull request on staging
+        required: false
+        default: staging
+        type: string
+      caller-workflow:
+        description: File name of the calling workflow, used to start a new run of it on main
+        required: false
+        default: staging.yaml
+        type: string
+      node-version:
+        description: Node.js version
+        required: false
+        default: "24"
+        type: string
+      pnpm-version:
+        description: pnpm version
+        required: false
+        default: "10"
+        type: string
+      run-playwright:
+        description: Install Chromium and run Playwright tests
+        required: false
+        default: true
+        type: boolean
+      minimum-release-age:
+        description: Minimum package release age in minutes
+        required: false
+        default: 10080
+        type: number
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+  pull-requests: write
+  issues: write
+  deployments: write
+  actions: write
+
+jobs:
+  staging:
+    name: Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: staging-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Find the staging tooling
+        env:
+          WORKFLOW_REPOSITORY: ${{ job.workflow_repository }}
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
+        run: |
+          echo "Staging-verktøy: $WORKFLOW_REPOSITORY@$WORKFLOW_SHA"
+          if [ -z "$WORKFLOW_REPOSITORY" ] || [ -z "$WORKFLOW_SHA" ]; then
+            echo "::error::job.workflow_repository eller job.workflow_sha er tom, så staging-verktøyene kan ikke hentes"
+            exit 1
+          fi
+
+      - name: Check out the staging tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .tms-deploy
+          persist-credentials: false
+
+      - name: Keep the tooling outside the workspace
+        run: cp -R .tms-deploy/staging "$RUNNER_TEMP/staging-tooling"
+
+      - name: Decide what staging should show
+        id: decide
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          LABEL: ${{ inputs.label }}
+          STAGING_APP: ${{ inputs.staging-app }}
+        with:
+          script: |
+            const { runDecide } = await import(`${process.env.RUNNER_TEMP}/staging-tooling/steps.mjs`);
+            const outputs = await runDecide({
+              github,
+              context,
+              label: process.env.LABEL,
+              stagingApp: process.env.STAGING_APP,
+              decisionPath: `${process.env.RUNNER_TEMP}/decision.json`,
+            });
+            for (const [name, value] of Object.entries(outputs)) core.setOutput(name, value);
+
+      - name: Check the pull request again before building it
+        if: steps.decide.outputs.build == 'true' && steps.decide.outputs.kind == 'pr'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          LABEL: ${{ inputs.label }}
+        with:
+          script: |
+            const { runGuard } = await import(`${process.env.RUNNER_TEMP}/staging-tooling/steps.mjs`);
+            await runGuard({
+              github,
+              context,
+              decisionPath: `${process.env.RUNNER_TEMP}/decision.json`,
+              label: process.env.LABEL,
+            });
+
+      - name: Check out the pull request merged with main
+        if: steps.decide.outputs.build == 'true' && steps.decide.outputs.kind == 'pr' && github.event_name != 'pull_request_target'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+        with:
+          ref: refs/pull/${{ steps.decide.outputs.pr }}/merge
+          persist-credentials: false
+
+      - name: Check that the checkout is the decided merge commit
+        id: pr-commit
+        if: steps.decide.outputs.build == 'true' && steps.decide.outputs.kind == 'pr'
+        env:
+          MERGE_SHA: ${{ steps.decide.outputs.merge-sha }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          if [ "$sha" != "$MERGE_SHA" ]; then
+            echo "::error::PR-en har endret seg eller GitHub har laget flettingen på nytt siden beslutningen (sjekket ut $sha, ventet $MERGE_SHA), prøv igjen"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out main
+        if: steps.decide.outputs.build == 'true' && steps.decide.outputs.kind == 'main'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Record the commit built from main
+        id: main-commit
+        if: steps.decide.outputs.build == 'true' && steps.decide.outputs.kind == 'main'
+        run: |
+          sha="$(git rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Set up pnpm
+        if: steps.decide.outputs.build == 'true'
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # ratchet:pnpm/action-setup@v6
+        with:
+          version: ${{ inputs.pnpm-version }}
+          run_install: false
+
+      - name: Set up Node.js
+        if: steps.decide.outputs.build == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # ratchet:actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          registry-url: https://npm.pkg.github.com
+          cache: ${{ !(github.ref == 'refs/heads/main' && steps.decide.outputs.kind == 'pr') && 'pnpm' || '' }}
+          package-manager-cache: false
+
+      - name: Install dependencies
+        if: steps.decide.outputs.build == 'true'
+        env:
+          MINIMUM_RELEASE_AGE: ${{ inputs.minimum-release-age }}
+          NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
+        run: pnpm install --frozen-lockfile --config.minimum-release-age="$MINIMUM_RELEASE_AGE"
+
+      - name: Run unit and component tests
+        if: steps.decide.outputs.build == 'true'
+        env:
+          ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
+        run: pnpm run test
+
+      - name: Install Playwright browsers
+        if: ${{ steps.decide.outputs.build == 'true' && inputs.run-playwright }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        if: ${{ steps.decide.outputs.build == 'true' && inputs.run-playwright }}
+        env:
+          ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
+          CI: "true"
+        run: pnpm run test:e2e
+
+      - name: Build application
+        if: steps.decide.outputs.build == 'true'
+        env:
+          ASTRO_KEY: ${{ secrets.ASTRO_KEY }}
+        run: pnpm run build
+
+      - name: Upload assets to CDN
+        if: steps.decide.outputs.build == 'true'
+        uses: nais/deploy/actions/cdn-upload/v2@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # ratchet:nais/deploy/actions/cdn-upload/v2@v3
+        with:
+          team: min-side
+          source: ./dist/client/_astro
+          destination: ${{ inputs.app-name }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
+      - name: Build and push Docker image
+        if: steps.decide.outputs.build == 'true'
+        id: docker-build-push
+        uses: nais/docker-build-push@ceabe305c64640175f133b7e59af6666b0a3c46c # ratchet:nais/docker-build-push@v0
+        with:
+          team: min-side
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          no_cache: ${{ github.event_name == 'pull_request_target' || (github.ref == 'refs/heads/main' && steps.decide.outputs.kind == 'pr') }}
+          salsa: ${{ !(github.ref == 'refs/heads/main' && steps.decide.outputs.kind == 'pr') }}
+
+      - name: Create the deployment and the deploy variables
+        if: steps.decide.outputs.build == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          BUILT_SHA: ${{ steps.pr-commit.outputs.sha || steps.main-commit.outputs.sha }}
+          IMAGE: ${{ steps.docker-build-push.outputs.image }}
+          STAGING_URL: ${{ inputs.staging-url }}
+        with:
+          script: |
+            const { prepareDeploy } = await import(`${process.env.RUNNER_TEMP}/staging-tooling/steps.mjs`);
+            await prepareDeploy({
+              github,
+              context,
+              decisionPath: `${process.env.RUNNER_TEMP}/decision.json`,
+              builtSha: process.env.BUILT_SHA,
+              image: process.env.IMAGE,
+              environmentUrl: process.env.STAGING_URL,
+              varsPath: `${process.env.GITHUB_WORKSPACE}/staging-vars.json`,
+              deployPath: `${process.env.RUNNER_TEMP}/deploy.json`,
+            });
+
+      - name: Deploy to Nais
+        id: deploy
+        if: steps.decide.outputs.build == 'true'
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: ${{ inputs.manifest }}
+          VARS: staging-vars.json
+
+      - name: Start a new run on main
+        if: ${{ !cancelled() && steps.decide.outputs.dispatch == 'true' }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          CALLER_WORKFLOW: ${{ inputs.caller-workflow }}
+        with:
+          script: |
+            const { dispatchCaller } = await import(`${process.env.RUNNER_TEMP}/staging-tooling/reconcile.mjs`);
+            await dispatchCaller({
+              github,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow: process.env.CALLER_WORKFLOW,
+            });
+
+      - name: Report the result
+        if: always() && steps.decide.outputs.build == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          STAGING_URL: ${{ inputs.staging-url }}
+          DISPLAY_NAME: ${{ inputs.display-name }}
+        with:
+          script: |
+            const { runFinish } = await import(`${process.env.RUNNER_TEMP}/staging-tooling/steps.mjs`);
+            await runFinish({
+              github,
+              context,
+              decisionPath: `${process.env.RUNNER_TEMP}/decision.json`,
+              deployPath: `${process.env.RUNNER_TEMP}/deploy.json`,
+              deploySucceeded: process.env.DEPLOY_OUTCOME === 'success',
+              stagingUrl: process.env.STAGING_URL,
+              displayName: process.env.DISPLAY_NAME,
+            });

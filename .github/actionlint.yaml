@@ -1,0 +1,7 @@
+paths:
+  .github/workflows/staging-v1.yaml:
+    ignore:
+      - 'property "workflow_(repository|sha)" is not defined in object type'
+  .github/workflows/staging-conflict-v1.yaml:
+    ignore:
+      - 'property "workflow_(repository|sha)" is not defined in object type'
