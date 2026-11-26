@@ -226,7 +226,7 @@ jobs:
           team: min-side
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          no_cache: ${{ github.ref == 'refs/heads/main' && steps.decide.outputs.kind == 'pr' }}
+          no_cache: ${{ github.event_name == 'pull_request_target' || (github.ref == 'refs/heads/main' && steps.decide.outputs.kind == 'pr') }}
           salsa: ${{ !(github.ref == 'refs/heads/main' && steps.decide.outputs.kind == 'pr') }}
 
       - name: Create the deployment and the deploy variables

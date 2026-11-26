@@ -261,6 +261,10 @@ Disse valgene bør ikke endres uten å vite hvorfor de er der:
   signeringssteget (`salsa`, som har egne cacher) skrudd av når en PR bygges i
   en kjøring på main. `package-manager-cache: false` står alltid, så
   setup-node ikke skrur på cache selv når `package.json` i en PR oppgir npm.
+- Kjøringer fra `pull_request_target` får bare lese fra cachen (GitHub siden
+  juni 2026). Der bygges bare main, når staging går tilbake til main, og
+  Docker-cachen er av, fordi bygget ellers feiler når buildx ikke får lagre
+  lagene.
 - Sjekken rett før utsjekking, `staging/guard.mjs`, står alene. Den importerer
   ingen annen modul og deler ingen kode med logikken som valgte PR-en. Alt den
   vet om PR-en, kommer fra én fersk lesing, og det den ikke kan bekrefte,
